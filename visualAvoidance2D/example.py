@@ -121,7 +121,7 @@ if plot:
     plt.show()
 
 print(f'Saved the list of functions and 3D map after {round(time.time() - start,2)} seconds')
-print(f"Now running optimization")
+# print(len(pdf_funcs[::4]))
 
 ############################################################################################
 # running path planner 
@@ -147,7 +147,7 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = 0.00000001
+probability_threshold = 1e-10
 new_shape = (25, 25, 25)
 reshaped_data = data.reshape(new_shape[0], original_shape[0]//new_shape[0],
                              new_shape[1], original_shape[1]//new_shape[1],
@@ -183,10 +183,12 @@ print("start_point:", start_point)
 goal_point = [goal[1], goal[2]]
 print("goal_point:", goal_point)
 
+print('Starting optimization...')
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.0)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint(x, binary_matrix), 0.0, probability_threshold)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, functions=pdf_funcs[::4]), 0.0, probability_threshold)
 res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=[(-1, 26) for i in range(len(int_X0))], constraints=[nlc, P_nlc])
 
+print('Optimization done!')
 print(res.success)
 print(res.message)
 print(len(res.x))
@@ -224,4 +226,6 @@ ax.set_xlim(0, 25)
 ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
+
+plt.savefig('path_with_func_constraints_1e_neg10.png')
 plt.show()

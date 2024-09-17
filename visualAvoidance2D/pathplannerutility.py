@@ -155,6 +155,17 @@ def pdf_map_constraint(x, data):
         result.append(data[int(i/2), idx1, idx2])
     return result
 
+def pdf_map_constraint_functionized(x, functions):
+    result = [] 
+    for i in range(0, len(x), 2):
+        # idx1 = int(np.round(x[i]))
+        # idx2 = int(np.round(x[i+1]))
+        
+        idx1 = min(max(int(x[i]), 0), len(functions) - 1)
+        idx2 = min(max(int(x[i+1]), 0), len(functions) - 1)
+        result.append(functions[int(i/2)](np.array([idx1, idx2])))
+    return result
+
 def object_function(x, goalPosition=(20,20)):
     '''Calculate the difference between the goal position and the current
     position of the distance'''
