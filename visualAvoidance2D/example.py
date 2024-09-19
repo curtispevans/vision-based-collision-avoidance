@@ -15,7 +15,7 @@ sim_time = 0
 start = time.time()
 
 # set up ownship
-ownship0 = utils.MsgState(pos=np.array([[1306.127], [529.102]]), vel=15, theta=0)
+ownship0 = utils.MsgState(pos=np.array([[0.0], [14.0]]), vel=15, theta=0)
 ownship = utils.MavDynamics(ownship0)
 
 # load the intruder data
@@ -85,14 +85,14 @@ for i in range(3):
 def get_wedge_sum(t, xy, wedges=wedges):
     return sum([wedge.get_wedge(t).pdf(xy) for wedge in wedges])
 
-plot = False
+plot = True
 
 # testing the function
 if plot:
     fig, ax = plt.subplots()
 
 zoom = 25000
-x, y = np.linspace(-12500, 12500, 100), np.linspace(0, zoom, 100)
+x, y = np.linspace(-2500, 2500, 100), np.linspace(-500, 4500, 100)
 X, Y = np.meshgrid(x, y)
 
 pdf_funcs = []
@@ -113,8 +113,8 @@ for i in range(25, 525):
         if plot:
             ax.cla()
             ax.contour(X, Y, Z, levels=10)
-            ax.set_xlim([-12500, 12500])
-            ax.set_ylim([0, zoom])
+            ax.set_xlim([-2500, 2500])
+            ax.set_ylim([-500, 4500])
             plt.pause(0.01)
 
 if plot:
@@ -184,11 +184,12 @@ goal_point = [goal[1], goal[2]]
 print("goal_point:", goal_point)
 
 print('Starting optimization...')
+start = time.time()
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.0)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, functions=pdf_funcs[::4]), 0.0, probability_threshold)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, functions=pdf_funcs[::4]), 0.0, 0.5)
 res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=[(-1, 26) for i in range(len(int_X0))], constraints=[nlc, P_nlc])
 
-print('Optimization done!')
+print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
 print(res.message)
 print(len(res.x))
