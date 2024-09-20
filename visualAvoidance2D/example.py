@@ -78,6 +78,8 @@ for i in range(3):
     wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
+print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
+start = time.time()
 ####################################################################################################################################
 # Now we have the wedges initialized. We can get the GMM at any time and x, y by calling wedge_estimator.get_wedge(t).pdf(x, y)
 
@@ -85,7 +87,7 @@ for i in range(3):
 def get_wedge_sum(t, xy, wedges=wedges):
     return sum([wedge.get_wedge(t).pdf(xy) for wedge in wedges])
 
-plot = True
+plot = False
 
 # testing the function
 if plot:
@@ -101,13 +103,14 @@ for i in range(25, 525):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
-    if i % 5 == 0:
+    if i % 25 == 0:
+        gmms = [wedge.get_wedge(sim_time) for wedge in wedges]
         def pdf(xy,sim_time=sim_time):
             return sum([wedge.get_wedge(sim_time).pdf(xy) for wedge in wedges])
 
         pdf_funcs.append(pdf)
 
-        Z = get_wedge_sum(sim_time, np.dstack((Y, X)))
+        Z = pdf(np.dstack((Y, X)))
         pdf_map.append(Z)
         
         if plot:
@@ -186,7 +189,7 @@ print("goal_point:", goal_point)
 print('Starting optimization...')
 start = time.time()
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.0)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, functions=pdf_funcs[::4]), 0.0, 0.5)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, functions=pdf_funcs[::4]), 0.0, probability_threshold)
 res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=[(-1, 26) for i in range(len(int_X0))], constraints=[nlc, P_nlc])
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
