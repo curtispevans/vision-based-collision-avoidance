@@ -157,7 +157,7 @@ def pdf_map_constraint(x, data):
 
 def pdf_map_constraint_functionized(x, functions):
     result = [] 
-    print("In the function constraint")
+    # print("In the function constraint")
     for i in range(0, len(x), 2):
         # idx1 = int(np.round(x[i]))
         # idx2 = int(np.round(x[i+1]))

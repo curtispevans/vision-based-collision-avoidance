@@ -255,8 +255,33 @@ class WedgeEstimator:
         self.far_vel = np.mean(far_diff, axis=0)
 
 
+    def get_wedge_vertices(self, t):
+        """
+        Return the vertices of the wedge at a given time
+        """
+        # get the vertices of the wedge
+        vertices, intruder_dir, r = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
+        
+        return vertices
+    
+    def get_wedge_single_gaussian(self, t):
+        '''
+        Return the elongated gaussian for the wedge at a given time
+        '''
+        # get the vertices of the wedge
+        vertices, intruder_dir, r = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
+        middle_bottom = (vertices[1] + vertices[2]) / 2
+        middle_top = (vertices[0] + vertices[3]) / 2
+        print(np.allclose(middle_top-middle_bottom, intruder_dir))
+        middle = middle_bottom + 0.5*r*intruder_dir
 
-    def get_wedge(self, t):
+        cov = np.diag([1,1])
+        gaussian = st.multivariate_normal(mean=middle_bottom.flatten(), cov=cov)
+
+        return gaussian
+
+
+    def get_wedge_gmm(self, t):
         """
         Returns the wedge at the given time.
         

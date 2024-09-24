@@ -85,7 +85,7 @@ start = time.time()
 
 # to get the sum we need to so something like this
 def get_wedge_sum(t, xy, wedges=wedges):
-    return sum([wedge.get_wedge(t).pdf(xy) for wedge in wedges])
+    return sum([wedge.get_wedge_gmm(t).pdf(xy) for wedge in wedges])
 
 plot = False
 
@@ -103,10 +103,10 @@ for i in range(25, 525):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
-    if i % 25 == 0:
-        gmms = [wedge.get_wedge(sim_time) for wedge in wedges]
+    if i % 5 == 0:
+        gmms = [wedge.get_wedge_gmm(sim_time) for wedge in wedges]
         def pdf(xy,sim_time=sim_time):
-            return sum([wedge.get_wedge(sim_time).pdf(xy) for wedge in wedges])
+            return sum([wedge.get_wedge_gmm(sim_time).pdf(xy) for wedge in wedges])
 
         pdf_funcs.append(pdf)
 
