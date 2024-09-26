@@ -271,12 +271,23 @@ class WedgeEstimator:
         # get the vertices of the wedge
         vertices, intruder_dir, r = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
         middle_bottom = (vertices[1] + vertices[2]) / 2
-        middle_top = (vertices[0] + vertices[3]) / 2
-        print(np.allclose(middle_top-middle_bottom, intruder_dir))
-        middle = middle_bottom + 0.5*r*intruder_dir
+        middle_left = (vertices[2] + vertices[3]) / 2
+        middle_right = (vertices[0] + vertices[1]) / 2
+        perp_direction = middle_right - middle_left
+        perp_dist = np.linalg.norm(perp_direction)
+        middle = middle_bottom + 0.5*intruder_dir
 
-        cov = np.diag([1,1])
-        gaussian = st.multivariate_normal(mean=middle_bottom.flatten(), cov=cov)
+        dot_prod = (intruder_dir.T @ np.array([[1.], [0.]]))[0][0]
+        oriented_bearing = np.arccos(dot_prod/np.linalg.norm(intruder_dir))
+        cross_prod = cross_product(intruder_dir, np.array([[1.], [0.]]))
+        if cross_prod > 0:
+            oriented_bearing = -oriented_bearing
+        
+        # get the rotation matrix
+        R = rotation_matrix(oriented_bearing)
+
+        cov = R @ np.diag([(r)**2,(perp_dist)**2]) @ R.T
+        gaussian = st.multivariate_normal(mean=middle.flatten(), cov=cov)
 
         return gaussian
 

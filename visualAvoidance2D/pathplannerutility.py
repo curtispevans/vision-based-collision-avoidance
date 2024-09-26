@@ -155,16 +155,17 @@ def pdf_map_constraint(x, data):
         result.append(data[int(i/2), idx1, idx2])
     return result
 
-def pdf_map_constraint_functionized(x, functions):
+def pdf_map_constraint_functionized(x, wedges):
     result = [] 
-    # print("In the function constraint")
+    
     for i in range(0, len(x), 2):
-        # idx1 = int(np.round(x[i]))
-        # idx2 = int(np.round(x[i+1]))
-        
-        idx1 = min(max(int(x[i]), 0), len(functions) - 1)
-        idx2 = min(max(int(x[i+1]), 0), len(functions) - 1)
-        result.append(functions[int(i/2)](np.array([idx1, idx2])))
+        idx1 = x[i]
+        idx2 = x[i+1]
+        x_shifted = 1600*idx2 - 20000
+        y_shifted = 800*idx1 - 5000
+        value = sum(wedge.get_wedge_single_gaussian(i/2).pdf(np.array([x_shifted, y_shifted])) for wedge in wedges)
+        # print(f't = {i/2}, idx1 = {idx1}, idx2 = {idx2}, x_shifted = {x_shifted}, y_shifted = {y_shifted}, value = {value}')
+        result.append(value)
     return result
 
 def object_function(x, goalPosition=(20,20)):
