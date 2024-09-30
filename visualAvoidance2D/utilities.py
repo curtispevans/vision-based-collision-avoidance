@@ -286,7 +286,7 @@ class WedgeEstimator:
         # get the rotation matrix
         R = rotation_matrix(oriented_bearing)
 
-        cov = R @ np.diag([(r/2)**2,(perp_dist/2)**2]) @ R.T
+        cov = R @ np.diag([(r)**2,(perp_dist)**2]) @ R.T
         gaussian = st.multivariate_normal(mean=middle.flatten(), cov=cov)
 
         return gaussian
