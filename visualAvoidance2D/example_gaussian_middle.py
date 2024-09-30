@@ -96,13 +96,14 @@ X, Y = np.meshgrid(x, y)
 
 pdf_funcs = []
 pdf_map = []
+
 for i in range(25, 525):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
     if i % 5 == 0:
         def pdf(xy,sim_time=sim_time):
-            return sum([wedge.get_wedge_single_gaussian(sim_time).pdf(xy) for wedge in wedges])
+            return sum([wedge.get_wedge_single_gaussian(4).pdf(xy) for wedge in wedges])
         vertices = []
         for wedge in wedges:
             vertices.append(wedge.get_wedge_vertices(sim_time))
@@ -151,7 +152,7 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = .5e-8
+probability_threshold = 1e-9
 new_shape = (25, 25, 25)
 reshaped_data = data.reshape(new_shape[0], original_shape[0]//new_shape[0],
                              new_shape[1], original_shape[1]//new_shape[1],
@@ -163,7 +164,7 @@ data = downsampled_data
 print("Downsampled shape:", downsampled_data.shape)
 
 start = (0, 0, 14)
-goal = (24, 24, 15)
+goal = (24, 24, 10)
 print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, probability_threshold)
@@ -191,8 +192,8 @@ print("goal_point:", goal_point)
 print('Starting optimization...')
 start = time.time()
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.0)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, wedges=wedges), 0.0, probability_threshold)
-res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=[(-1, 26) for i in range(len(int_X0))], constraints=[nlc, P_nlc])
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_fixed(x, wedges=wedges), 0.0, probability_threshold)
+res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=None, constraints=[nlc, P_nlc], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
@@ -211,7 +212,7 @@ x, y = np.meshgrid(x, y)
 # ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
 
 for i in range(0, data.shape[0]):
-   sc =  ax.contourf(x, y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
+   sc =  ax.contourf(x, y, data[4, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
 cbar = plt.colorbar(sc, ax=ax, pad=0.1)
 cbar.set_label('Color Scale')
 

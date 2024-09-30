@@ -1,6 +1,7 @@
 import heapq
 import numpy as np
 import math
+import scipy.stats as stats
 
 def binarize_matrix(matrix, threshold):
     matrix = np.array(matrix)
@@ -163,7 +164,31 @@ def pdf_map_constraint_functionized(x, wedges):
         idx2 = x[i+1]
         x_shifted = 1600*idx2 - 20000
         y_shifted = 800*idx1 - 5000
-        value = sum(wedge.get_wedge_single_gaussian(i/2).pdf(np.array([x_shifted, y_shifted])) for wedge in wedges)
+        value = sum(wedge.get_wedge_single_gaussian(i/2).pdf(np.array([y_shifted, x_shifted])) for wedge in wedges)
+        # print(f't = {i/2}, idx1 = {idx1}, idx2 = {idx2}, x_shifted = {x_shifted}, y_shifted = {y_shifted}, value = {value}')
+        result.append(value)
+    return result
+
+def pdf_map_constraint_functionized_fixed(x, wedges):
+    result = [] 
+    
+    for i in range(0, len(x), 2):
+        idx1 = x[i]
+        idx2 = x[i+1]
+        x_shifted = 1600*idx2 - 20000
+        y_shifted = 800*idx1 - 5000
+        value = sum(wedge.get_wedge_single_gaussian(4).pdf(np.array([y_shifted, x_shifted])) for wedge in wedges)
+        # print(f't = {i/2}, idx1 = {idx1}, idx2 = {idx2}, x_shifted = {x_shifted}, y_shifted = {y_shifted}, value = {value}')
+        result.append(value)
+    return result
+
+def pdf_map_middle(x):
+    result = [] 
+    
+    for i in range(0, len(x), 2):
+        idx1 = x[i]
+        idx2 = x[i+1]
+        value = stats.multivariate_normal.pdf([idx1, idx2], mean=[13,13], cov=3*np.eye(2))
         # print(f't = {i/2}, idx1 = {idx1}, idx2 = {idx2}, x_shifted = {x_shifted}, y_shifted = {y_shifted}, value = {value}')
         result.append(value)
     return result
