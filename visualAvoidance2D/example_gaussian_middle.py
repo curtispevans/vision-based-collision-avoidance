@@ -73,7 +73,7 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-for i in range(2):
+for i in range(1):
     wedge_estimator = utils.WedgeEstimator()
     wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
@@ -84,7 +84,7 @@ start = time.time()
 # Now we have the wedges initialized. We can get the GMM at any time and x, y by calling wedge_estimator.get_wedge(t).pdf(x, y)
 
 
-plot = False
+plot = True
 
 # testing the function
 if plot:
