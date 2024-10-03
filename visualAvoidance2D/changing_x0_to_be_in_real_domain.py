@@ -170,7 +170,7 @@ data = downsampled_data
 print("Downsampled shape:", downsampled_data.shape)
 
 start = (0, 0, 14)
-goal = (new_shape[0]-1, new_shape[2]-1, 15)
+goal = (new_shape[0]-1, new_shape[1]-1, 15)
 print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, 1e-8)
@@ -184,23 +184,24 @@ print("path length:", len(path))
 
 int_X0 = []
 past = -1
+scaler_shift = 20000/new_shape[1]
 for i in range(0, len(path)):
-    # print(i,path[i])
     if path[i][0] != past:
-        int_X0.append(path[i][1]*scale_resolution)
-        int_X0.append(path[i][2]*scale_resolution)
+        int_X0.append(scaler_shift*path[i][1]-5000)
+        int_X0.append(scaler_shift*path[i][2]-10000)
     past = path[i][0]
 
+
 print("int_X0:", int_X0)
-start_point = [start[1], start[2]]
+start_point = [scaler_shift*start[1]-5000, scaler_shift*start[2]-10000]
 print("start_point:", start_point)
-goal_point = [goal[1], goal[2]]
+goal_point = [scaler_shift*goal[1]-5000, scaler_shift*goal[2]-10000]
 print("goal_point:", goal_point)
 
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_shifted(x, wedges=wedges, size=new_shape[1]), 0.0, probability_threshold)
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1500.)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_with_x0_preshifted(x, wedges=wedges), 0.0, probability_threshold)
 # P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_list(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
 # bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
 bounds_for_optimization = None
@@ -211,19 +212,19 @@ print(res.success)
 print(res.message)
 print(len(res.x))
 
+
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 # Show the plot
 z = np.arange(data.shape[0])
-y = np.arange(data.shape[1])
-x = np.arange(data.shape[2])
+x, y = np.linspace(-10000, 10000, 25), np.linspace(-5000, 15000, 25)
 
-x, y = np.meshgrid(x, y)
+X, Y = np.meshgrid(x, y)
 # voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
 # ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
 
 for i in range(0, data.shape[0]):
-   sc =  ax.contourf(x, y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
+   sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
 cbar = plt.colorbar(sc, ax=ax, pad=0.1)
 cbar.set_label('Color Scale')
 
@@ -240,8 +241,8 @@ for i in range(0, len(int_X0), 2):
 
 
 ax.set_zlim(0, new_shape[0])
-ax.set_ylim(0, new_shape[1])
-ax.set_xlim(0, new_shape[2])
+ax.set_xlim([-10000, 10000])
+ax.set_ylim([-5000, 15000])
 ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
@@ -256,7 +257,7 @@ print("animating optimal path")
 def update(frame):
     ax.cla()
     # contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
-    ax.contour(x, y, data[frame, :, :] > probability_threshold, levels=1)
+    ax.contour(X, Y, data[frame, :, :] > probability_threshold, levels=1)
     ax.scatter(res.x[2*frame+1], res.x[2*frame])
     
     return ax

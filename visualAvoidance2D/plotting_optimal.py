@@ -76,7 +76,7 @@ for i in range(shift_index, num_measurements):
 wedges = []
 for i in range(1):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+2], sizes_list[i+2], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -164,7 +164,7 @@ data = downsampled_data
 
 print("Downsampled shape:", downsampled_data.shape)
 
-start = (0, 0, 15)
+start = (0, 0, 14)
 goal = (24, 24, 15)
 print("start point:",start, "goal point:", goal)
 
@@ -248,6 +248,7 @@ print("animating optimal path")
 def update(frame):
     ax.cla()
     contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
+    ax.contour(x, y, data[frame, :, :] > probability_threshold, levels=1)
     ax.scatter(res.x[2*frame+1], res.x[2*frame])
     
     return ax
