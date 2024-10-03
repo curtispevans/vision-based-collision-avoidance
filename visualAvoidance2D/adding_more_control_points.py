@@ -7,6 +7,7 @@ from matplotlib import cm
 from matplotlib import animation
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.interpolate import BSpline
+from scipy import ndimage
 
 import utilities as utils
 from pathplannerutility import *
@@ -74,9 +75,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-for i in range(1):
+num_intruders = 2
+for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+2], sizes_list[i+2], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -119,8 +121,8 @@ for i in range(25, 525):
             for vertice in vertices:
                 utils.plot_wedge(vertice, ax)
             ax.contour(X, Y, Z, levels=20)
-            ax.set_xlim([-10000, 5000])
-            ax.set_ylim([-5000, 5000])
+            ax.set_xlim([-10000, 10000])
+            ax.set_ylim([-5000, 15000])
             plt.pause(0.1)
 
 if plot:
@@ -153,108 +155,113 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = 1e-9
+probability_threshold = num_intruders*.5e-8
 new_shape = (25, 25, 25)
-reshaped_data = data.reshape(new_shape[0], original_shape[0]//new_shape[0],
-                             new_shape[1], original_shape[1]//new_shape[1],
-                             new_shape[2], original_shape[2]//new_shape[2])
 
-# downsampled_data = reshaped_data.mean(axis=(1, 3, 5))
-# data = downsampled_data
+def downsample_data(data, new_shape):
+    zoom_factors = [n / o for n, o in zip(new_shape, data.shape)]
+    downsampled = ndimage.zoom(data, zoom_factors, order=1, mode='nearest')
+    return downsampled
 
-
-# print("Downsampled shape:", downsampled_data.shape)
-
-# start = (0, 0, 15)
-# goal = (24, 24, 15)
-# print("start point:",start, "goal point:", goal)
-
-# binary_matrix = binarize_matrix(data, 1e-8)
-# # path = [(i, i, 15) for i in range(25)]
-# path = bidirectional_a_star(binary_matrix, start, goal)
+downsampled_data = downsample_data(data, new_shape)
+data = downsampled_data
 
 
-# print("path:", path)
-# print("path length:", len(path))
+print("Downsampled shape:", downsampled_data.shape)
 
-# int_X0 = []
-# past = -1
-# for i in range(0, len(path)):
-#     # print(i,path[i])
-#     if path[i][0] != past:
-#         int_X0.append(path[i][1]*scale_resolution)
-#         int_X0.append(path[i][2]*scale_resolution)
-#     past = path[i][0]
+start = (0, 0, 16)
+goal = (new_shape[0]-1, new_shape[2]-1, 15)
+print("start point:",start, "goal point:", goal)
 
-# print("int_X0:", int_X0)
-# start_point = [start[1], start[2]]
-# print("start_point:", start_point)
-# goal_point = [goal[1], goal[2]]
-# print("goal_point:", goal_point)
-
-# print('Starting optimization...')
-# start = time.time()
-# nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.0)
-# P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_fixed(x, wedges=wedges), 0.0, probability_threshold)
-# # P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_list(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
-# res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=None, options={'maxiter':500, 'disp':True}, constraints=[nlc, P_nlc], )
-
-# print(f'Optimization done in {round(time.time() - start,2)} seconds')
-# print(res.success)
-# print(res.message)
-# print(len(res.x))
-
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# # Show the plot
-# z = np.arange(data.shape[0])
-# y = np.arange(data.shape[1])
-# x = np.arange(data.shape[2])
-
-# x, y = np.meshgrid(x, y)
-# # voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
-# # ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
-
-# for i in range(0, data.shape[0]):
-#    sc =  ax.contourf(x, y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
-# cbar = plt.colorbar(sc, ax=ax, pad=0.1)
-# cbar.set_label('Color Scale')
+binary_matrix = binarize_matrix(data, 1e-8)
+print(binary_matrix.shape)
+# path = [(i, i, 15) for i in range(25)]
+path = bidirectional_a_star(binary_matrix, start, goal)
 
 
-# # Plot the path
-# z_coords = [point[0] for point in path]
-# x_coords = [point[2] for point in path]
-# y_coords = [point[1] for point in path]
-# ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
+print("path:", path)
+print("path length:", len(path))
 
-# for i in range(0, len(int_X0), 2):
-#     ax.scatter3D(int_X0[i+1], int_X0[i], int(i/2))
-#     ax.scatter3D(res.x[i+1], res.x[i], int(i/2), color='red')
+int_X0 = []
+past = -1
+for i in range(0, len(path)):
+    # print(i,path[i])
+    if path[i][0] != past:
+        int_X0.append(path[i][1]*scale_resolution)
+        int_X0.append(path[i][2]*scale_resolution)
+    past = path[i][0]
+
+print("int_X0:", int_X0)
+start_point = [start[1], start[2]]
+print("start_point:", start_point)
+goal_point = [goal[1], goal[2]]
+print("goal_point:", goal_point)
+
+print('Starting optimization...')
+start = time.time()
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_shifted(x, wedges=wedges, size=new_shape[1]), 0.0, probability_threshold)
+# P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_list(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
+# bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
+bounds_for_optimization = None
+res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, P_nlc], )
+
+print(f'Optimization done in {round(time.time() - start,2)} seconds')
+print(res.success)
+print(res.message)
+print(len(res.x))
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+# Show the plot
+z = np.arange(data.shape[0])
+y = np.arange(data.shape[1])
+x = np.arange(data.shape[2])
+
+x, y = np.meshgrid(x, y)
+# voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
+# ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
+
+for i in range(0, data.shape[0]):
+   sc =  ax.contourf(x, y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
+cbar = plt.colorbar(sc, ax=ax, pad=0.1)
+cbar.set_label('Color Scale')
 
 
-# ax.set_zlim(0, 25)
-# ax.set_ylim(0, 25)
-# ax.set_xlim(0, 25)
-# ax.set_xlabel('X axis')
-# ax.set_ylabel('Y axis')
-# ax.set_zlabel('Time axis')
+# Plot the path
+z_coords = [point[0] for point in path]
+x_coords = [point[2] for point in path]
+y_coords = [point[1] for point in path]
+ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
 
-# title = "straight_righttoleft_pdfconstraint1e-9"
-# # plt.savefig(title+'.png')
+for i in range(0, len(int_X0), 2):
+    ax.scatter3D(int_X0[i+1], int_X0[i], int(i/2))
+    ax.scatter3D(res.x[i+1], res.x[i], int(i/2), color='red')
 
-# plt.show()
-# fig, ax = plt.subplots()
 
-# print("animating optimal path")
-# def update(frame):
-#     ax.cla()
-#     contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
-#     ax.scatter(res.x[2*frame+1], res.x[2*frame])
+ax.set_zlim(0, new_shape[0])
+ax.set_ylim(0, new_shape[1])
+ax.set_xlim(0, new_shape[2])
+ax.set_xlabel('X axis')
+ax.set_ylabel('Y axis')
+ax.set_zlabel('Time axis')
+
+title = "straight_righttoleft_pdfconstraint1e-9"
+# plt.savefig(title+'.png')
+
+plt.show()
+fig, ax = plt.subplots()
+
+print("animating optimal path")
+def update(frame):
+    ax.cla()
+    contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
+    ax.scatter(res.x[2*frame+1], res.x[2*frame])
     
-#     return ax
+    return ax
 
-# ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
+ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
 
-# # Save the animation as an MP4 file
-# # ani.save(title+'.mp4', writer='ffmpeg', fps=10)
-# plt.show()
+# Save the animation as an MP4 file
+# ani.save(title+'.mp4', writer='ffmpeg', fps=10)
+plt.show()

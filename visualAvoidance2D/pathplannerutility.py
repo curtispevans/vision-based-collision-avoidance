@@ -182,6 +182,19 @@ def pdf_map_constraint_functionized_fixed(x, wedges):
         result.append(value)
     return result
 
+def pdf_map_constraint_functionized_shifted(x, wedges, size=25):
+    result = [] 
+    
+    for i in range(0, len(x), 2):
+        idx1 = x[i]
+        idx2 = x[i+1]
+        x_shifted = 20000/size*idx2 - 10000
+        y_shifted = 20000/size*idx1 - 5000
+        value = sum(wedge.get_wedge_single_gaussian(4*i//2).pdf(np.array([y_shifted, x_shifted])) for wedge in wedges)
+        # print(f't = {i/2}, idx1 = {idx1}, idx2 = {idx2}, x_shifted = {x_shifted}, y_shifted = {y_shifted}, value = {value}')
+        result.append(value)
+    return result
+
 def pdf_map_constraint_functionized_list(x, pdf_functions):
     result = []
     
