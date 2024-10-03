@@ -201,8 +201,6 @@ def pdf_map_constraint_functionized_with_x0_preshifted(x, wedges):
     for i in range(0, len(x), 2):
         idx1 = x[i]
         idx2 = x[i+1]
-        x_shifted = idx2
-        y_shifted = idx1
         value = sum(wedge.get_wedge_single_gaussian(4*i//2).pdf(np.array([idx1, idx2])) for wedge in wedges)
         result.append(value)
     return result
