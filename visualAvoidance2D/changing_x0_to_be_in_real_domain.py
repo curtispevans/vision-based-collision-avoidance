@@ -94,17 +94,17 @@ if plot:
     fig, ax = plt.subplots()
 
 zoom = 25000
-x, y = np.linspace(-10000, 10000, 100), np.linspace(-5000, 15000, 100)
+x, y = np.linspace(-10000, 10000, 25), np.linspace(-5000, 15000, 25)
 X, Y = np.meshgrid(x, y)
 
 pdf_funcs = []
-pdf_map = []
+pdf_map_list = []
 
 for i in range(25, 525):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
-    if i % 5 == 0:
+    if i % 20 == 0:
         def pdf(xy,sim_time=sim_time):
             return sum([wedge.get_wedge_single_gaussian(sim_time).pdf(xy) for wedge in wedges])
         vertices = []
@@ -114,7 +114,7 @@ for i in range(25, 525):
         pdf_funcs.append(pdf)
 
         Z = pdf(np.dstack((Y, X)))
-        pdf_map.append(Z)
+        pdf_map_list.append(Z)
         
         if plot:
             ax.cla()
@@ -129,7 +129,7 @@ if plot:
     plt.show()
 
 print(f'Saved the list of functions and 3D map after {round(time.time() - start,2)} seconds')
-# print(len(pdf_funcs[::4]))
+print(len(pdf_funcs))
 
 ############################################################################################
 # running path planner 
@@ -149,25 +149,25 @@ map_object = LinearSegmentedColormap.from_list(name='rainbow_alpha',colors=color
 # register this new colormap with matplotlib
 plt.colormaps.register(cmap=map_object)
 
-data = np.array(pdf_map)
+data = np.array(pdf_map_list)
 
 original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = num_intruders*.5e-8
+probability_threshold = num_intruders*1.2e-8
 new_shape = (25, 25, 25)
 
-def downsample_data(data, new_shape):
-    zoom_factors = [n / o for n, o in zip(new_shape, data.shape)]
-    downsampled = ndimage.zoom(data, zoom_factors, order=1, mode='nearest')
-    return downsampled
+# def downsample_data(data, new_shape):
+#     zoom_factors = [n / o for n, o in zip(new_shape, data.shape)]
+#     downsampled = ndimage.zoom(data, zoom_factors, order=1, mode='nearest')
+#     return downsampled
 
-downsampled_data = downsample_data(data, new_shape)
-data = downsampled_data
+# downsampled_data = downsample_data(data, new_shape)
+# data = downsampled_data
 
 
-print("Downsampled shape:", downsampled_data.shape)
+print("Downsampled shape:", data.shape)
 
 start = (0, 0, 14)
 goal = (new_shape[0]-1, new_shape[1]-1, 15)
@@ -193,6 +193,7 @@ for i in range(0, len(path)):
 
 
 print("int_X0:", int_X0)
+print("len(int_X0):", len(int_X0))
 start_point = [scaler_shift*start[1]-5000, scaler_shift*start[2]-10000]
 print("start_point:", start_point)
 goal_point = [scaler_shift*goal[1]-5000, scaler_shift*goal[2]-10000]
@@ -200,9 +201,9 @@ print("goal_point:", goal_point)
 
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1500.)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_with_x0_preshifted(x, wedges=wedges), 0.0, probability_threshold)
-# P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_list(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 800.)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_list_with_x0_preshifted(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
+
 # bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
 bounds_for_optimization = None
 res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, P_nlc], )
@@ -230,10 +231,10 @@ cbar.set_label('Color Scale')
 
 
 # Plot the path
-z_coords = [point[0] for point in path]
-x_coords = [point[2] for point in path]
-y_coords = [point[1] for point in path]
-ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
+# z_coords = [point[0] for point in path]
+# x_coords = [point[2] for point in path]
+# y_coords = [point[1] for point in path]
+# ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
 
 for i in range(0, len(int_X0), 2):
     ax.scatter3D(int_X0[i+1], int_X0[i], int(i/2))
@@ -253,11 +254,15 @@ title = "straight_righttoleft_pdfconstraint1e-9"
 plt.show()
 fig, ax = plt.subplots()
 
+x, y = np.linspace(-10000, 10000, 200), np.linspace(-5000, 15000, 200)
+
+X, Y = np.meshgrid(x, y)
+
 print("animating optimal path")
 def update(frame):
     ax.cla()
     # contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
-    ax.contour(X, Y, data[frame, :, :] > probability_threshold, levels=1)
+    ax.contour(X, Y, pdf_funcs[frame](np.dstack((Y,X))) > probability_threshold, levels=1)
     ax.scatter(res.x[2*frame+1], res.x[2*frame])
     
     return ax

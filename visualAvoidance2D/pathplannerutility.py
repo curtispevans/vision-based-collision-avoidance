@@ -205,6 +205,16 @@ def pdf_map_constraint_functionized_with_x0_preshifted(x, wedges):
         result.append(value)
     return result
 
+def pdf_map_constraint_list_with_x0_preshifted(x, pdf_functions):
+    result = [] 
+    
+    for i in range(0, len(x), 2):
+        idx1 = x[i]
+        idx2 = x[i+1]
+        value = pdf_functions[i//2](np.array([idx1, idx2]))
+        result.append(value)
+    return result
+
 def pdf_map_constraint_functionized_list(x, pdf_functions):
     result = []
     
