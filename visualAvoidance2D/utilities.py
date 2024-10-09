@@ -15,9 +15,9 @@ uav_size = uav_scale * uav_wingspan
 bearing_uncertainty = 0.1
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 30
+min_area = 50
 # This is the largest pixel area that an intruder could possibly be
-max_area = 100
+max_area = 70
 
 ############################################################################################################
 
@@ -286,7 +286,7 @@ class WedgeEstimator:
         # get the rotation matrix
         R = rotation_matrix(oriented_bearing)
 
-        cov = R @ np.diag([(r)**2,(perp_dist)**2]) @ R.T
+        cov = R @ np.diag([(r/3)**2,(perp_dist/3)**2]) @ R.T
         gaussian = st.multivariate_normal(mean=middle.flatten(), cov=cov)
 
         return gaussian

@@ -17,7 +17,7 @@ sim_time = 0
 start = time.time()
 
 # set up ownship
-ownship0 = utils.MsgState(pos=np.array([[0.0], [14.0]]), vel=15, theta=0)
+ownship0 = utils.MsgState(pos=np.array([[-1000.0], [.0]]), vel=15, theta=0)
 ownship = utils.MavDynamics(ownship0)
 
 # load the intruder data
@@ -87,14 +87,14 @@ start = time.time()
 # Now we have the wedges initialized. We can get the GMM at any time and x, y by calling wedge_estimator.get_wedge(t).pdf(x, y)
 
 
-plot = False
+plot = True
 
 # testing the function
 if plot:
     fig, ax = plt.subplots()
 
 zoom = 25000
-x, y = np.linspace(-10000, 10000, 25), np.linspace(-5000, 15000, 25)
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 X, Y = np.meshgrid(x, y)
 
 pdf_funcs = []
@@ -120,10 +120,10 @@ for i in range(25, 525):
             ax.cla()
             for vertice in vertices:
                 utils.plot_wedge(vertice, ax)
-            ax.contour(X, Y, Z, levels=20)
-            ax.set_xlim([-10000, 10000])
-            ax.set_ylim([-5000, 15000])
-            plt.pause(0.1)
+            ax.contour(X, Y, Z, levels=10)
+            ax.set_xlim([-5000, 5000])
+            ax.set_ylim([-1000, 9000])
+            plt.pause(0.2)
 
 if plot:
     plt.show()
@@ -155,7 +155,7 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = num_intruders*1.2e-8
+probability_threshold = num_intruders*0.4e-8
 new_shape = (25, 25, 25)
 
 # def downsample_data(data, new_shape):
@@ -164,12 +164,12 @@ new_shape = (25, 25, 25)
 #     return downsampled
 
 # downsampled_data = downsample_data(data, new_shape)
-# data = downsampled_data
+# data = downsampled_datahg
 
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 14)
+start = (0, 0, 10)
 goal = (new_shape[0]-1, new_shape[1]-1, 15)
 print("start point:",start, "goal point:", goal)
 
@@ -184,24 +184,24 @@ print("path length:", len(path))
 
 int_X0 = []
 past = -1
-scaler_shift = 20000/new_shape[1]
+scaler_shift = 10000/new_shape[1]
 for i in range(0, len(path)):
     if path[i][0] != past:
-        int_X0.append(scaler_shift*path[i][1]-5000)
-        int_X0.append(scaler_shift*path[i][2]-10000)
+        int_X0.append(scaler_shift*path[i][1]-1000)
+        int_X0.append(scaler_shift*path[i][2]-5000)
     past = path[i][0]
 
 
 print("int_X0:", int_X0)
 print("len(int_X0):", len(int_X0))
-start_point = [scaler_shift*start[1]-5000, scaler_shift*start[2]-10000]
+start_point = [scaler_shift*start[1]-1000, scaler_shift*start[2]-5000]
 print("start_point:", start_point)
-goal_point = [scaler_shift*goal[1]-5000, scaler_shift*goal[2]-10000]
+goal_point = [scaler_shift*goal[1]-1000, scaler_shift*goal[2]-5000]
 print("goal_point:", goal_point)
 
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 800.)
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
 P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_list_with_x0_preshifted(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
 
 # bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
