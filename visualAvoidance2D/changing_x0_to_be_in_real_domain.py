@@ -87,7 +87,7 @@ start = time.time()
 # Now we have the wedges initialized. We can get the GMM at any time and x, y by calling wedge_estimator.get_wedge(t).pdf(x, y)
 
 
-plot = True
+plot = False
 
 # testing the function
 if plot:
@@ -169,8 +169,8 @@ new_shape = (25, 25, 25)
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 10)
-goal = (new_shape[0]-1, new_shape[1]-1, 15)
+start = (0, 0, 13)
+goal = (new_shape[0]-1, new_shape[1]-1, 13)
 print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, 1e-8)
@@ -206,7 +206,7 @@ P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_list_with_x0_preshifted
 
 # bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
 bounds_for_optimization = None
-res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, P_nlc], )
+res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,P_nlc], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
@@ -218,7 +218,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 # Show the plot
 z = np.arange(data.shape[0])
-x, y = np.linspace(-10000, 10000, 25), np.linspace(-5000, 15000, 25)
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 
 X, Y = np.meshgrid(x, y)
 # voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
@@ -242,8 +242,8 @@ for i in range(0, len(int_X0), 2):
 
 
 ax.set_zlim(0, new_shape[0])
-ax.set_xlim([-10000, 10000])
-ax.set_ylim([-5000, 15000])
+ax.set_xlim([-5000, 5000])
+ax.set_ylim([-1000, 9000])
 ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
@@ -254,7 +254,7 @@ title = "straight_righttoleft_pdfconstraint1e-9"
 plt.show()
 fig, ax = plt.subplots()
 
-x, y = np.linspace(-10000, 10000, 200), np.linspace(-5000, 15000, 200)
+x, y = np.linspace(-5000, 5000, 200), np.linspace(-1000, 9000, 200)
 
 X, Y = np.meshgrid(x, y)
 
