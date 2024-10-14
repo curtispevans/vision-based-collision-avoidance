@@ -15,9 +15,9 @@ uav_size = uav_scale * uav_wingspan
 bearing_uncertainty = 0.1
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 35
+min_area = 11
 # This is the largest pixel area that an intruder could possibly be
-max_area = 55
+max_area = 75
 
 ############################################################################################################
 
@@ -189,7 +189,7 @@ class GMM:
 
 
 class WedgeEstimator:
-    def __init__(self, n=15) -> None:
+    def __init__(self, n=20) -> None:
         self.ts = ts_simulation
 
         # this is the smallest and largest area that the intruder can be in
@@ -303,7 +303,12 @@ class WedgeEstimator:
         """
         # get the vertices of the wedge
         vertices, intruder_dir, r = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
-        
+        middle_bottom = (vertices[1] + vertices[2]) / 2
+        middle_left = (vertices[2] + vertices[3]) / 2
+        middle_right = (vertices[0] + vertices[1]) / 2
+        perp_direction = middle_right - middle_left
+        perp_dist = np.linalg.norm(perp_direction)
+        middle = middle_bottom + 0.5*intruder_dir
 
         dot_prod = (intruder_dir.T @ np.array([[1.], [0.]]))[0][0]
         oriented_bearing = np.arccos(dot_prod/np.linalg.norm(intruder_dir))
@@ -324,9 +329,9 @@ class WedgeEstimator:
         n_points = len(points)
         
         # get the covariance and weights then generate the GMM
-        cov = R @ self.cov @ R.T
+        cov = R @ np.diag([(r/5)**2,(perp_dist/5)**2]) @ R.T
         weights = np.ones(n_points) / n_points
-        gmm = GMM(n_components=n_points, weights=weights, means=points, covars=[7*r*cov]*n_points)
+        gmm = GMM(n_components=n_points, weights=weights, means=points, covars=[cov]*n_points)
 
         return gmm
 

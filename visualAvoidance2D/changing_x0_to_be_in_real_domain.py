@@ -75,7 +75,7 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 2
+num_intruders = 1
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
     wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
@@ -87,7 +87,7 @@ start = time.time()
 # Now we have the wedges initialized. We can get the GMM at any time and x, y by calling wedge_estimator.get_wedge(t).pdf(x, y)
 
 
-plot = False
+plot = True
 
 # testing the function
 if plot:
@@ -128,6 +128,7 @@ for i in range(25, 525):
 if plot:
     plt.show()
 
+np.save('list_of_vertices.npy', np.array(vertices))
 print(f'Saved the list of functions and 3D map after {round(time.time() - start,2)} seconds')
 print(len(pdf_funcs))
 

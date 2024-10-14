@@ -3,7 +3,7 @@ import numpy as np
 import math
 import time
 from scipy.optimize import minimize, NonlinearConstraint, differential_evolution
-from matplotlib import cm
+from matplotlib import cm, animation
 from matplotlib.colors import LinearSegmentedColormap
 from scipy.interpolate import BSpline
 
@@ -87,14 +87,14 @@ start = time.time()
 def get_wedge_sum(t, xy, wedges=wedges):
     return sum([wedge.get_wedge_gmm(t).pdf(xy) for wedge in wedges])
 
-plot = False
+plot = True
 
 # testing the function
 if plot:
     fig, ax = plt.subplots()
 
 zoom = 25000
-x, y = np.linspace(-2500, 2500, 100), np.linspace(-500, 4500, 100)
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 X, Y = np.meshgrid(x, y)
 
 pdf_funcs = []
@@ -103,7 +103,7 @@ for i in range(25, 525):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
-    if i % 5 == 0:
+    if i % 20 == 0:
         gmms = [wedge.get_wedge_gmm(sim_time) for wedge in wedges]
         def pdf(xy,sim_time=sim_time):
             return sum([wedge.get_wedge_gmm(sim_time).pdf(xy) for wedge in wedges])
@@ -116,8 +116,8 @@ for i in range(25, 525):
         if plot:
             ax.cla()
             ax.contour(X, Y, Z, levels=10)
-            ax.set_xlim([-2500, 2500])
-            ax.set_ylim([-500, 4500])
+            ax.set_xlim([-5000, 5000])
+            ax.set_ylim([-1000, 9000])
             plt.pause(0.01)
 
 if plot:
@@ -150,14 +150,15 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = 1e-10
+probability_threshold = 1e-7
 new_shape = (25, 25, 25)
-reshaped_data = data.reshape(new_shape[0], original_shape[0]//new_shape[0],
-                             new_shape[1], original_shape[1]//new_shape[1],
-                             new_shape[2], original_shape[2]//new_shape[2])
+# reshaped_data = data.reshape(new_shape[0], original_shape[0]//new_shape[0],
+#                              new_shape[1], original_shape[1]//new_shape[1],
+#                              new_shape[2], original_shape[2]//new_shape[2])
 
-downsampled_data = reshaped_data.mean(axis=(1, 3, 5))
-data = downsampled_data
+# downsampled_data = reshaped_data.mean(axis=(1, 3, 5))
+# data = downsampled_data
+downsampled_data = data
 
 print("Downsampled shape:", downsampled_data.shape)
 
@@ -165,7 +166,7 @@ start = (0, 0, 14)
 goal = (24, 24, 15)
 print("start point:",start, "goal point:", goal)
 
-binary_matrix = binarize_matrix(data, 0.00000001)
+binary_matrix = binarize_matrix(data, 1e-7)
 path = bidirectional_a_star(binary_matrix, start, goal)
 
 print("path:", path)
@@ -173,24 +174,25 @@ print("path length:", len(path))
 
 int_X0 = []
 past = -1
+scaler_shift = 10000/25
 for i in range(0, len(path)):
     # print(i,path[i])
     if path[i][0] != past:
-        int_X0.append(path[i][1]*scale_resolution)
-        int_X0.append(path[i][2]*scale_resolution)
+        int_X0.append(path[i][1]*scaler_shift-1000)
+        int_X0.append(path[i][2]*scaler_shift-5000)
     past = path[i][0]
 
 print("int_X0:", len(int_X0))
-start_point = [start[1], start[2]]
+start_point = [start[1]*scaler_shift-1000, start[2]*scaler_shift-5000]
 print("start_point:", start_point)
-goal_point = [goal[1], goal[2]]
+goal_point = [goal[1]*scaler_shift-1000, goal[2]*scaler_shift-5000]
 print("goal_point:", goal_point)
 
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.0)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, functions=pdf_funcs[::4]), 0.0, probability_threshold)
-res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=[(-1, 26) for i in range(len(int_X0))], constraints=[nlc, P_nlc])
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.0)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized(x, pdf_funcs), 0.0, probability_threshold)
+res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=None, options={'maxiter':500, 'disp':True}, constraints=[nlc, P_nlc])
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
@@ -201,35 +203,57 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 # Show the plot
 z = np.arange(data.shape[0])
-y = np.arange(data.shape[1])
-x = np.arange(data.shape[2])
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 
-x, y = np.meshgrid(x, y)
-voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
-ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
+X, Y = np.meshgrid(x, y)
+# voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
+# ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
 
 for i in range(0, data.shape[0]):
-   sc =  ax.contourf(x, y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
+   sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
 cbar = plt.colorbar(sc, ax=ax, pad=0.1)
 cbar.set_label('Color Scale')
 
 
 # Plot the path
-z_coords = [point[0] for point in path]
-x_coords = [point[2] for point in path]
-y_coords = [point[1] for point in path]
-ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
+# z_coords = [point[0] for point in path]
+# x_coords = [point[2] for point in path]
+# y_coords = [point[1] for point in path]
+# ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
 
 for i in range(0, len(int_X0), 2):
     ax.scatter3D(int_X0[i+1], int_X0[i], int(i/2))
+    ax.scatter3D(res.x[i+1], res.x[i], int(i/2), color='red')
 
 
-ax.set_zlim(0, 25)
-ax.set_ylim(0, 25)
-ax.set_xlim(0, 25)
+ax.set_zlim(0, new_shape[0])
+ax.set_xlim([-5000, 5000])
+ax.set_ylim([-1000, 9000])
 ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
 
-plt.savefig('path_with_func_constraints_1e_neg10.png')
+title = "straight_righttoleft_pdfconstraint1e-9"
+# plt.savefig(title+'.png')
+
+plt.show()
+fig, ax = plt.subplots()
+
+x, y = np.linspace(-5000, 5000, 200), np.linspace(-1000, 9000, 200)
+
+X, Y = np.meshgrid(x, y)
+
+print("animating optimal path")
+def update(frame):
+    ax.cla()
+    # contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
+    ax.contour(X, Y, pdf_funcs[frame](np.dstack((Y,X))) > probability_threshold, levels=1)
+    ax.scatter(res.x[2*frame+1], res.x[2*frame])
+    
+    return ax
+
+ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
+
+# Save the animation as an MP4 file
+# ani.save(title+'.mp4', writer='ffmpeg', fps=10)
 plt.show()
