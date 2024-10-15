@@ -15,7 +15,7 @@ sim_time = 0
 start = time.time()
 
 # set up ownship
-ownship0 = utils.MsgState(pos=np.array([[0.0], [.0]]), vel=15, theta=0)
+ownship0 = utils.MsgState(pos=np.array([[0.0], [.0]]), vel=30, theta=0)
 ownship = utils.MavDynamics(ownship0)
 
 # load the intruder data
@@ -29,8 +29,10 @@ intruder1 = intruder1[cut:]
 intruder2 = intruder2[cut:]
 intruder3 = intruder3[cut:]
 
-num_measurements = 25
-window_size = 9
+# num_measurements = 25
+# window_size = 9
+num_measurements = 10
+window_size = 5
 
 mf1 = utils.MedianFilter(window_size)
 mf2 = utils.MedianFilter(window_size)
