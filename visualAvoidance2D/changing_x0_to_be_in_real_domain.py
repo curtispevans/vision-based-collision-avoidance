@@ -77,10 +77,8 @@ for i in range(shift_index, num_measurements):
 wedges = []
 num_intruders = 2
 for i in range(num_intruders):
-    if i == 1:
-        i = 2
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -102,11 +100,11 @@ X, Y = np.meshgrid(x, y)
 pdf_funcs = []
 pdf_map_list = []
 
-for i in range(25, 525):
+for i in range(25, 650):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
-    if i % 20 == 0:
+    if i % 25 == 0:
         def pdf(xy,sim_time=sim_time):
             return sum([wedge.get_wedge_single_gaussian(sim_time).pdf(xy) for wedge in wedges])
         vertices = []
@@ -158,14 +156,14 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = num_intruders*.4e-8
+probability_threshold = num_intruders*.6e-8
 new_shape = (25, 25, 25)
 
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 15)
-goal = (new_shape[0]-1, new_shape[1]-1, 20)
+start = (0, 0, 13)
+goal = (new_shape[0]-1, new_shape[1]-1, 13)
 print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, 1e-8)
