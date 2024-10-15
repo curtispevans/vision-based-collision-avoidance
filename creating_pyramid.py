@@ -23,29 +23,19 @@ def plot_pyramid(vertices):
     # Plot the base of the pyramid on the XY plane (z=0)
     for i in range(4):
         next_i = (i + 1) % 4
-        ax.plot([vertices[i, 0], vertices[next_i, 0]], 
-                [vertices[i, 1], vertices[next_i, 1]], 
+        ax.plot([vertices[i, 1], vertices[next_i, 1]], 
+                [vertices[i, 0], vertices[next_i, 0]], 
                 [0, 0], 'r-')
     
     # # Connect each vertex of the base to the apex
     for i in range(4):
-        ax.plot([vertices[i].item(0), apex[0]], 
-                [vertices[i].item(1), apex[1]], 
+        ax.plot([vertices[i].item(1), apex[1]], 
+                [vertices[i].item(0), apex[0]], 
                 [0, apex[2]], 'r-')
         
     plt.show()
 
 vertices = np.load('list_of_vertices.npy')
 vertices = vertices[0]
-print(vertices[0][0])
 
 plot_pyramid(vertices)
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot((2, 1), (2, 1), (0, 1))
-ax.plot((0,1),(0,1),(0,1))
-ax.plot((0,1),(2,1),(0,1))
-ax.plot((2,1),(0,1),(0,1))
-
-plt.show()
