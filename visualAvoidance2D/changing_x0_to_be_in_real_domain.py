@@ -75,10 +75,12 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 1
+num_intruders = 2
 for i in range(num_intruders):
+    if i == 1:
+        i = 2
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -156,22 +158,14 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = num_intruders*0.4e-8
+probability_threshold = num_intruders*.4e-8
 new_shape = (25, 25, 25)
-
-# def downsample_data(data, new_shape):
-#     zoom_factors = [n / o for n, o in zip(new_shape, data.shape)]
-#     downsampled = ndimage.zoom(data, zoom_factors, order=1, mode='nearest')
-#     return downsampled
-
-# downsampled_data = downsample_data(data, new_shape)
-# data = downsampled_datahg
 
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 13)
-goal = (new_shape[0]-1, new_shape[1]-1, 13)
+start = (0, 0, 15)
+goal = (new_shape[0]-1, new_shape[1]-1, 20)
 print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, 1e-8)
@@ -205,7 +199,6 @@ start = time.time()
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
 P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_list_with_x0_preshifted(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
 
-# bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
 bounds_for_optimization = None
 res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,P_nlc], )
 
@@ -217,25 +210,18 @@ print(len(res.x))
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+
+
 # Show the plot
 z = np.arange(data.shape[0])
 x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 
 X, Y = np.meshgrid(x, y)
-# voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
-# ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
 
 for i in range(0, data.shape[0]):
    sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
 cbar = plt.colorbar(sc, ax=ax, pad=0.1)
 cbar.set_label('Color Scale')
-
-
-# Plot the path
-# z_coords = [point[0] for point in path]
-# x_coords = [point[2] for point in path]
-# y_coords = [point[1] for point in path]
-# ax.plot(x_coords, y_coords, z_coords, label='Path', color='green', linewidth=3, zorder=1)
 
 for i in range(0, len(int_X0), 2):
     ax.scatter3D(int_X0[i+1], int_X0[i], int(i/2))
