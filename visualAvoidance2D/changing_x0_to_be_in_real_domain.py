@@ -233,8 +233,8 @@ ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
 
-title = "straight_righttoleft_pdfconstraint1e-9"
-# plt.savefig(title+'.png')
+title = "visualAvoidance2D/figures/success_two_across"
+plt.savefig(title+'.png')
 
 plt.show()
 fig, ax = plt.subplots()
@@ -255,5 +255,5 @@ def update(frame):
 ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
 
 # Save the animation as an MP4 file
-# ani.save(title+'.mp4', writer='ffmpeg', fps=10)
+ani.save(title+'.mp4', writer='ffmpeg', fps=10)
 plt.show()
