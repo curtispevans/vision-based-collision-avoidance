@@ -128,7 +128,7 @@ for i in range(25, 650):
 if plot:
     plt.show()
 
-np.save('list_of_vertices.npy', np.array(vertices))
+# np.save('list_of_vertices.npy', np.array(vertices))
 print(f'Saved the list of functions and 3D map after {round(time.time() - start,2)} seconds')
 print(len(pdf_funcs))
 
