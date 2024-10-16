@@ -17,7 +17,7 @@ sim_time = 0
 start = time.time()
 
 # set up ownship
-ownship0 = utils.MsgState(pos=np.array([[0.0], [14.0]]), vel=15, theta=0)
+ownship0 = utils.MsgState(pos=np.array([[-1000.0], [.0]]), vel=15, theta=0)
 ownship = utils.MavDynamics(ownship0)
 
 # load the intruder data
@@ -94,17 +94,17 @@ if plot:
     fig, ax = plt.subplots()
 
 zoom = 25000
-x, y = np.linspace(-10000, 10000, 100), np.linspace(-5000, 15000, 100)
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 X, Y = np.meshgrid(x, y)
 
 pdf_funcs = []
 pdf_map = []
 
-for i in range(25, 525):
+for i in range(25, 650):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
-    if i % 5 == 0:
+    if i % 25 == 0:
         def pdf(xy,sim_time=sim_time):
             return sum([wedge.get_wedge_single_gaussian(sim_time).pdf(xy) for wedge in wedges])
         vertices = []
@@ -120,10 +120,10 @@ for i in range(25, 525):
             ax.cla()
             for vertice in vertices:
                 utils.plot_wedge(vertice, ax)
-            ax.contour(X, Y, Z, levels=20)
-            ax.set_xlim([-10000, 10000])
-            ax.set_ylim([-5000, 15000])
-            plt.pause(0.1)
+            ax.contour(X, Y, Z, levels=10)
+            ax.set_xlim([-5000, 5000])
+            ax.set_ylim([-1000, 9000])
+            plt.pause(0.2)
 
 if plot:
     plt.show()
@@ -155,19 +155,19 @@ original_shape = data.shape
 print("Original shape:", original_shape)
 
 scale_resolution = 1
-probability_threshold = num_intruders*.5e-8
+probability_threshold = num_intruders*.6e-8
 new_shape = (25, 25, 25)
 
-def downsample_data(data, new_shape):
-    zoom_factors = [n / o for n, o in zip(new_shape, data.shape)]
-    downsampled = ndimage.zoom(data, zoom_factors, order=1, mode='nearest')
-    return downsampled
+# def downsample_data(data, new_shape):
+#     zoom_factors = [n / o for n, o in zip(new_shape, data.shape)]
+#     downsampled = ndimage.zoom(data, zoom_factors, order=1, mode='nearest')
+#     return downsampled
 
-downsampled_data = downsample_data(data, new_shape)
-data = downsampled_data
+# downsampled_data = downsample_data(data, new_shape)
+# data = downsampled_data
 
 
-print("Downsampled shape:", downsampled_data.shape)
+print("Downsampled shape:", data.shape)
 
 start = (0, 0, 14)
 goal = (new_shape[0]-1, new_shape[2]-1, 15)
@@ -184,25 +184,25 @@ print("path length:", len(path))
 
 int_X0 = []
 past = -1
+scaler_shift = 10000/new_shape[0]
 for i in range(0, len(path)):
     # print(i,path[i])
     if path[i][0] != past:
-        int_X0.append(path[i][1]*scale_resolution)
-        int_X0.append(path[i][2]*scale_resolution)
+        int_X0.append(path[i][1]*scaler_shift-1000)
+        int_X0.append(path[i][2]*scaler_shift-5000)
     past = path[i][0]
 
 print("int_X0:", int_X0)
-start_point = [start[1], start[2]]
+start_point = [start[1]*scaler_shift-1000, start[2]*scaler_shift-5000]
 print("start_point:", start_point)
-goal_point = [goal[1], goal[2]]
+goal_point = [goal[1]*scaler_shift-1000, goal[2]*scaler_shift-5000]
 print("goal_point:", goal_point)
 
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 1.)
-P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_shifted(x, wedges=wedges, size=new_shape[1]), 0.0, probability_threshold)
-# P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_functionized_list(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
-# bounds_for_optimization = [(-1, new_shape[0]+1) for i in range(len(int_X0))]
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
+P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_list_with_x0_preshifted(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
+
 bounds_for_optimization = None
 res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, P_nlc], )
 
@@ -215,10 +215,9 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 # Show the plot
 z = np.arange(data.shape[0])
-y = np.arange(data.shape[1])
-x = np.arange(data.shape[2])
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 
-x, y = np.meshgrid(x, y)
+X, Y = np.meshgrid(x, y)
 # voxels_transposed = np.transpose(binary_matrix, (2, 1, 0))
 # ax.voxels(voxels_transposed, edgecolor='none', alpha=0.1)
 
@@ -240,8 +239,8 @@ for i in range(0, len(int_X0), 2):
 
 
 ax.set_zlim(0, new_shape[0])
-ax.set_ylim(0, new_shape[1])
-ax.set_xlim(0, new_shape[2])
+ax.set_xlim([-5000, 5000])
+ax.set_ylim([-1000, 9000])
 ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')

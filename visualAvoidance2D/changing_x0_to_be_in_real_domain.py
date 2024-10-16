@@ -130,7 +130,6 @@ if plot:
 
 # np.save('list_of_vertices.npy', np.array(vertices))
 print(f'Saved the list of functions and 3D map after {round(time.time() - start,2)} seconds')
-print(len(pdf_funcs))
 
 ############################################################################################
 # running path planner 
@@ -234,7 +233,7 @@ ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
 
 title = "visualAvoidance2D/figures/success_two_across"
-plt.savefig(title+'.png')
+# plt.savefig(title+'.png')
 
 plt.show()
 fig, ax = plt.subplots()
@@ -255,5 +254,5 @@ def update(frame):
 ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
 
 # Save the animation as an MP4 file
-ani.save(title+'.mp4', writer='ffmpeg', fps=10)
+# ani.save(title+'.mp4', writer='ffmpeg', fps=10)
 plt.show()
