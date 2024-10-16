@@ -185,11 +185,14 @@ print("path length:", len(path))
 int_X0 = []
 past = -1
 scaler_shift = 10000/new_shape[0]
+# TODO make the path have 2 points inbetween each control point
 for i in range(0, len(path)):
     # print(i,path[i])
     if path[i][0] != past:
         int_X0.append(path[i][1]*scaler_shift-1000)
+        # TODO here add the two points for index 1
         int_X0.append(path[i][2]*scaler_shift-5000)
+        # TODO here add the tow points for index 2
     past = path[i][0]
 
 print("int_X0:", int_X0)
