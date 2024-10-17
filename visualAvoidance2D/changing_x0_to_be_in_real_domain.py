@@ -75,10 +75,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 2
+num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -165,7 +165,7 @@ start = (0, 0, 13)
 goal = (new_shape[0]-1, new_shape[1]-1, 13)
 print("start point:",start, "goal point:", goal)
 
-binary_matrix = binarize_matrix(data, 1e-8)
+binary_matrix = binarize_matrix(data, 5e-8)
 print(binary_matrix.shape)
 # path = [(i, i, 15) for i in range(25)]
 path = bidirectional_a_star(binary_matrix, start, goal)
@@ -197,7 +197,7 @@ nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
 P_nlc = NonlinearConstraint(lambda x: pdf_map_constraint_list_with_x0_preshifted(x, pdf_functions=pdf_funcs), 0.0, probability_threshold)
 
 bounds_for_optimization = None
-res = minimize(object_function, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,P_nlc], )
+res = minimize(object_function_new, int_X0, args=((goal_point[0], goal_point[1]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,P_nlc], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)

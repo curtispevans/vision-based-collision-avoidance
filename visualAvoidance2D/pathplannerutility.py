@@ -234,3 +234,10 @@ def object_function(x, goalPosition=(20,20)):
         res = tmp + res
     # print(res)
     return res
+
+def object_function_new(x, goalPosition=(20,20)):
+    '''Calculate the difference between the goal position and the current
+    position of the distance'''
+    res = 0
+    res = math.dist((x[-2], x[-1]), goalPosition)
+    return res
