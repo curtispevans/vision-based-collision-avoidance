@@ -241,3 +241,27 @@ def object_function_new(x, goalPosition=(20,20)):
     res = 0
     res = math.dist((x[-2], x[-1]), goalPosition)
     return res
+
+def inside_wedge(x, vertices):
+    '''Check if a point is inside a single wedge'''
+    def sign(a, b, o):
+            # get the determinate of [a-o, b-o]
+            return (a[0] - o[0]) * (b[1] - o[1]) - (b[0] - o[0]) * (a[1] - o[1])
+    
+    v1, v2, v3, v4 = vertices
+    d1 = sign(v1, v2, x)
+    d2 = sign(v2, v3, x)
+    d3 = sign(v3, v4, x)
+    d4 = sign(v4, v1, x)
+    
+    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0) or (d4 < 0)
+    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0) or (d4 > 0)
+    
+    return float(not (has_neg and has_pos))
+
+def inside_all_wedges(x, vertices_list):
+    '''Check if a point is inside all the wedges'''
+    for vertices in vertices_list:
+        if not inside_wedge(x, vertices):
+            return 0.0
+    return 1.0
