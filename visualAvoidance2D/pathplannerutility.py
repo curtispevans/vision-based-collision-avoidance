@@ -262,6 +262,6 @@ def inside_wedge(x, vertices):
 def inside_all_wedges(x, vertices_list):
     '''Check if a point is inside all the wedges'''
     for vertices in vertices_list:
-        if not inside_wedge(x, vertices):
-            return 0.0
-    return 1.0
+        if inside_wedge(x, vertices) == 1.0:
+            return 1.0
+    return 0.0
