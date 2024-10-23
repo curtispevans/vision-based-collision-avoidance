@@ -72,9 +72,60 @@ def test_in_v4_range():
     p = np.array([0,4])
     test_helper_function(p, vertices)
 
+def test_distance_function():
+    n = 100
+    vertices = np.array([[n/2,n/2],[n/2, -n/2],[-n/2, -n/2],[-n/2,n/2]])
+    # print(vertices.shape)
+    x, y = np.linspace(-n,n,100), np.linspace(-n,n,100)
+    X, Y = np.meshgrid(x, y)
+    Z = np.zeros_like(X)
+    for i in range(len(x)):
+        for j in range(len(y)):
+            Z[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/100) - 1
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
+            [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+    ax.plot_surface(X, Y, Z, cmap='viridis')
+    # ax.set_zlim([-1, 10])
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('distance')
+
+    plt.show()
+
+def test_vertices():
+    list_of_vertices = np.load('visualAvoidance2D/data/vertices.npy')
+    idx = np.random.choice(len(list_of_vertices), 3)
+    vertices_of_interest = list_of_vertices[idx]
+    
+    for vertices in vertices_of_interest:
+        vertices = vertices.reshape(4,2).copy()
+        minx, miny = np.min(vertices, axis=0)
+        maxx, maxy = np.max(vertices, axis=0)
+        x, y = np.linspace(minx-100, maxx+100, 200), np.linspace(miny-100, maxy+100, 200)
+        X, Y = np.meshgrid(x, y)
+        Z = np.zeros_like(X)
+        for i in range(len(x)):
+            for j in range(len(y)):
+                Z[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/500) - 1
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
+                [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+        ax.plot_surface(X, Y, Z, cmap='viridis')
+        # add color bar
+        # cbar = plt.colorbar(ax.plot_surface(X, Y, np.exp(Z) - 1, cmap='viridis'))
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('distance')
+
+        plt.show()
+    
 
 if __name__ == '__main__':
-    test1()
+    # test1()
     # test_inside_wedge()
     # test_in_e1_range()
     # test_in_e2_range()
@@ -84,4 +135,6 @@ if __name__ == '__main__':
     # test_in_v2_range()
     # test_in_v3_range()
     # test_in_v4_range()
-    print('All tests passed')
+    # print('All tests passed')
+    # test_distance_function()
+    test_vertices()

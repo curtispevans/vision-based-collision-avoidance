@@ -77,10 +77,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 3
+num_intruders = 1
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -100,6 +100,8 @@ zoom = 25000
 x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 X, Y = np.meshgrid(x, y)
 
+list_of_vertices = []
+
 for i in range(25, 650):
     sim_time += utils.ts_simulation
 
@@ -108,7 +110,7 @@ for i in range(25, 650):
         vertices = []
         for wedge in wedges:
             vertices.append(wedge.get_wedge_vertices(sim_time))
-        
+        list_of_vertices.append(vertices[0])
         if plot:
             ax.cla()
             for vertice in vertices:
@@ -121,3 +123,5 @@ for i in range(25, 650):
 
 if plot:
     plt.show()
+
+np.save('visualAvoidance2D/data/vertices.npy', np.array(list_of_vertices))
