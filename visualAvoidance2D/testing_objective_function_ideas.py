@@ -75,17 +75,23 @@ def test_in_v4_range():
 def test_distance_function():
     n = 100
     vertices = np.array([[n/2,n/2],[n/2, -n/2],[-n/2, -n/2],[-n/2,n/2]])
+    vertices2 = vertices + 100
     # print(vertices.shape)
-    x, y = np.linspace(-n,n,100), np.linspace(-n,n,100)
+    x, y = np.linspace(-2*n,2*n,100), np.linspace(-2*n,2*n,100)
     X, Y = np.meshgrid(x, y)
-    Z = np.zeros_like(X)
+    Z1 = np.zeros_like(X)
+    Z2 = np.zeros_like(X)
     for i in range(len(x)):
         for j in range(len(y)):
-            Z[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/100) - 1
+            Z1[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/100)
+            Z2[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices2)/100)
+    Z = Z1 + Z2 - 1
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
             [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+    ax.plot([vertices2[0,0], vertices2[1,0], vertices2[2,0], vertices2[3,0], vertices2[0,0]],
+            [vertices2[0,1], vertices2[1,1], vertices2[2,1], vertices2[3,1], vertices2[0,1]], 'hotpink', linewidth=2)
     ax.plot_surface(X, Y, Z, cmap='viridis')
     # ax.set_zlim([-1, 10])
     ax.set_xlabel('x')
@@ -113,6 +119,7 @@ def test_vertices():
         ax = fig.add_subplot(111, projection='3d')
         ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
                 [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+        
         ax.plot_surface(X, Y, Z, cmap='viridis')
         # add color bar
         # cbar = plt.colorbar(ax.plot_surface(X, Y, np.exp(Z) - 1, cmap='viridis'))
@@ -136,5 +143,5 @@ if __name__ == '__main__':
     # test_in_v3_range()
     # test_in_v4_range()
     # print('All tests passed')
-    # test_distance_function()
-    test_vertices()
+    test_distance_function()
+    # test_vertices()

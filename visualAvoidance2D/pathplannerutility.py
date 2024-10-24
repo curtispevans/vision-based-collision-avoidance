@@ -2,6 +2,7 @@ import heapq
 import numpy as np
 import math
 import scipy.stats as stats
+from objective_function_ideas import *
 
 def binarize_matrix(matrix, threshold):
     matrix = np.array(matrix)
