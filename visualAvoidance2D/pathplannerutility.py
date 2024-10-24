@@ -114,9 +114,11 @@ def bidirectional_a_star(grid, start, goal):
 
 def con_cltr_pnt(x, start_point):
     con = []
-    con.append(math.dist((start_point[0], start_point[1]), (x[0], x[1])))
+    dist = np.sqrt((start_point[0]-x[0])**2 + (start_point[1]-x[1])**2)
+    con.append(dist)
     for i in range(0, len(x)-2, 2):
-        con.append(math.dist((x[i], x[i+1]), (x[i+2], x[i+3])))
+        dist = np.sqrt((x[i]-x[i+2])**2 + (x[i+1]-x[i+3])**2)
+        con.append(dist)
     # print(con)
     return con
 
@@ -240,8 +242,25 @@ def object_function_new(x, goalPosition=(20,20)):
     '''Calculate the difference between the goal position and the current
     position of the distance'''
     res = 0
-    res = math.dist((x[-2], x[-1]), goalPosition)
+    res = (x[-2] - goalPosition[0])**2 + (x[-1] - goalPosition[1])**2
     return res
+
+def objective_function_with_constraints(x, goalPosition=(20,20), vertices_list=None):
+    '''Calculate the difference between the goal position and the current
+    position of the distance'''
+    res = 0
+    # res = np.linalg.norm(np.array([x[-2], x[-1]]) - np.array(goalPosition))
+    res = (x[-2] - goalPosition[0])**2 + (x[-1] - goalPosition[1])**2
+    # res = math.dist((x[-2], x[-1]), goalPosition)
+
+    for i in range(0, len(x), 2):
+        vertices = vertices_list[i//2].reshape(4,2).copy()
+        res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices))
+    
+    res - 1
+
+    return res
+
 
 def inside_wedge(x, vertices):
     '''Check if a point is inside a single wedge'''

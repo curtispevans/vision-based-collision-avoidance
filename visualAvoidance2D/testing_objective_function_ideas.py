@@ -75,7 +75,7 @@ def test_in_v4_range():
 def test_distance_function():
     n = 100
     vertices = np.array([[n/2,n/2],[n/2, -n/2],[-n/2, -n/2],[-n/2,n/2]])
-    vertices2 = vertices + 100
+    vertices2 = vertices + 50
     # print(vertices.shape)
     x, y = np.linspace(-2*n,2*n,100), np.linspace(-2*n,2*n,100)
     X, Y = np.meshgrid(x, y)
@@ -83,9 +83,10 @@ def test_distance_function():
     Z2 = np.zeros_like(X)
     for i in range(len(x)):
         for j in range(len(y)):
-            Z1[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/100)
-            Z2[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices2)/100)
-    Z = Z1 + Z2 - 1
+            Z1[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/25) - 1 
+            Z2[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices2)/25) - 1
+    Z = Z1 + Z2
+    print(np.min(Z))
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
