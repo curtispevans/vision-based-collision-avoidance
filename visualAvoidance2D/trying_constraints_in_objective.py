@@ -207,6 +207,7 @@ X, Y = np.meshgrid(x, y)
 #     utils.plot_wedge(vertices, ax)
 
 for i in range(0, data.shape[0]):
+   
    sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
 cbar = plt.colorbar(sc, ax=ax, pad=0.1)
 cbar.set_label('Color Scale')
@@ -237,8 +238,6 @@ X, Y = np.meshgrid(x, y)
 print("animating optimal path")
 def update(frame):
     ax.cla()
-    # contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
-    # ax.contour(X, Y, pdf_funcs[frame](np.dstack((Y,X))) > probability_threshold, levels=1)
     ax.scatter(res.x[2*frame+1], res.x[2*frame])
     utils.plot_wedge(list_of_vertices[frame], ax)
     ax.set_xlim([-5000, 5000])
