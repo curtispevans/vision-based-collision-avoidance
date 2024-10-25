@@ -84,7 +84,7 @@ for i in range(num_intruders):
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
 start = time.time()
 
-plot = True
+plot = False
 
 # testing the function
 if plot:
@@ -203,6 +203,9 @@ x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 
 X, Y = np.meshgrid(x, y)
 
+# for i, vertices in enumerate(list_of_vertices):
+#     utils.plot_wedge(vertices, ax)
+
 for i in range(0, data.shape[0]):
    sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
 cbar = plt.colorbar(sc, ax=ax, pad=0.1)
@@ -237,6 +240,10 @@ def update(frame):
     # contour = ax.contourf(x, y, data[frame, :, :], 100, cmap='rainbow_alpha')
     # ax.contour(X, Y, pdf_funcs[frame](np.dstack((Y,X))) > probability_threshold, levels=1)
     ax.scatter(res.x[2*frame+1], res.x[2*frame])
+    utils.plot_wedge(list_of_vertices[frame], ax)
+    ax.set_xlim([-5000, 5000])
+    ax.set_ylim([-1000, 9000])
+
     
     return ax
 
