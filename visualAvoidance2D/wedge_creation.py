@@ -125,3 +125,25 @@ if plot:
     plt.show()
 
 np.save('visualAvoidance2D/data/vertices.npy', np.array(list_of_vertices))
+
+
+# now animate the plot
+fig, ax = plt.subplots()
+ax.set_xlim([-5000, 5000])
+ax.set_ylim([-1000, 9000])
+ax.set_aspect('equal')
+# ax.set_title(f"Time = {round(sim_time,2)}")
+ax.plot(ownship.state.pos.item(1), ownship.state.pos.item(0), 'bo')
+
+def animate(i):
+    ax.cla()
+    utils.plot_wedge(list_of_vertices[i], ax)
+    ax.plot(ownship.state.pos.item(1), ownship.state.pos.item(0), 'bo')
+    ax.set_xlim([-5000, 5000])
+    ax.set_ylim([-1000, 9000])
+    # ax.set_title(f"Time = {round(sim_time,2)}")
+    return ax
+
+ani = animation.FuncAnimation(fig, animate, frames=len(list_of_vertices), interval=100)
+ani.save('visualAvoidance2D/data/wedges.mp4')
+plt.show()
