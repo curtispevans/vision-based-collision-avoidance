@@ -457,3 +457,20 @@ def plot_wedge(vertices, ax):
 def cross_product(a, b):
     return a.item(0)*b.item(1) - a.item(1)*b.item(0)
 
+def are_inside_wedge(points, vertices):
+    # for this function to work a and b must be (2,) and o must be (n,2)
+    v1, v2, v3, v4 = vertices
+    def sign(a, b, o):
+        # get the determinate of [a-o, b-o]
+        return (a[0] - o[:,0]) * (b[1] - o[:,1]) - (b[0] - o[:,0]) * (a[1] - o[:,1])
+    
+    d1 = sign(v1, v2, points)
+    d2 = sign(v2, v3, points)
+    d3 = sign(v3, v4, points)
+    d4 = sign(v4, v1, points)
+    
+    has_neg = (d1 < 0) | (d2 < 0) | (d3 < 0) | (d4 < 0)
+    has_pos = (d1 > 0) | (d2 > 0) | (d3 > 0) | (d4 > 0)
+    
+    return ~(has_neg & has_pos)
+
