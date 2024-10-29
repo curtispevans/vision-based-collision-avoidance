@@ -75,7 +75,7 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 3
+num_intruders = 2
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
     wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
@@ -175,6 +175,17 @@ path = bidirectional_a_star(data, start, goal)
 print("path:", path)
 print("path length:", len(path))
 
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+voxels_transposed = np.transpose(data, (2, 1, 0))
+ax.voxels(voxels_transposed, edgecolor='none', alpha=0.5)
+
+for i in range(0, len(path)):
+    ax.plot(path[i][2], path[i][1], path[i][0], 'o', color='blue', markersize=4)
+
+plt.show()
+
 int_X0 = []
 past = -1
 scaler_shift = 10000/new_shape[1]
@@ -184,6 +195,16 @@ for i in range(0, len(path)):
         int_X0.append(scaler_shift*path[i][2]-5000)
     past = path[i][0]
 
+new_X0 = []
+
+for i in range(0, len(int_X0)-2, 2):
+    new_X0.append(int_X0[i])
+    new_X0.append(int_X0[i+1])
+    new_X0.append((int_X0[i] + int_X0[i+2])/2)
+    new_X0.append((int_X0[i+1] + int_X0[i+3])/2)
+
+new_X0.append(int_X0[-2])
+new_X0.append(int_X0[-1])
 
 print("int_X0:", int_X0)
 print("len(int_X0):", len(int_X0))

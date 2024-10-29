@@ -114,6 +114,7 @@ def bidirectional_a_star(grid, start, goal):
 
 def con_cltr_pnt(x, start_point):
     con = []
+    # NOTE using the square root is probably not necessary but I cant get it to work without it. I square the bounded distance and it still won't work
     dist = np.sqrt((start_point[0]-x[0])**2 + (start_point[1]-x[1])**2)
     con.append(dist)
     for i in range(0, len(x)-2, 2):
