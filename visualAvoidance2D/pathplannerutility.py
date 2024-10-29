@@ -251,13 +251,13 @@ def objective_function_with_constraints(x, goalPosition=(20,20), vertices_list=N
     res = 0
     # res = np.linalg.norm(np.array([x[-2], x[-1]]) - np.array(goalPosition))
     res = (x[-2] - goalPosition[0])**2 + (x[-1] - goalPosition[1])**2
-    # res = math.dist((x[-2], x[-1]), goalPosition)
 
     for i in range(0, len(x), 2):
-        vertices = vertices_list[i//2].reshape(4,2).copy()
-        res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices))
+        for vertices in vertices_list[i//2]:
+            vertices = vertices.reshape(4,2).copy()
+            res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
     
-    res - 1
+    # res - 1
 
     return res
 

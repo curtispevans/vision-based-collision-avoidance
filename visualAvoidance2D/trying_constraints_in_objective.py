@@ -75,10 +75,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 1
+num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -105,14 +105,19 @@ for i in range(25, 650):
         def pdf(xy,sim_time=sim_time):
             return sum([wedge.get_wedge_single_gaussian(sim_time).pdf(xy) for wedge in wedges])
         
-        Z = pdf(np.dstack((Y,X)))
-        pdf_map_list.append(Z)
+        # Z = pdf(np.dstack((Y,X)))
+        # pdf_map_list.append(Z)
 
-
+        Z = np.zeros((25, 25))
         vertices = []
+        points = np.vstack((Y.ravel(), X.ravel())).T
         for wedge in wedges:
-            vertices.append(wedge.get_wedge_vertices(sim_time))
-        list_of_vertices.append(vertices[0])
+            vertice = wedge.get_wedge_vertices(sim_time)
+            vertices.append(vertice)
+            Z += utils.are_inside_wedge(points, vertice).reshape(25, 25)
+        list_of_vertices.append(vertices)
+
+        pdf_map_list.append(Z)
         if plot:
             ax.cla()
             for vertice in vertices:
@@ -125,6 +130,9 @@ for i in range(25, 650):
 
 if plot:
     plt.show()
+
+
+
 
 # get colormap
 ncolors = 256
@@ -157,9 +165,12 @@ print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, 5e-8)
 print(binary_matrix.shape)
-# path = [(i, i, 15) for i in range(25)]
-path = bidirectional_a_star(binary_matrix, start, goal)
 
+# path = [(i, i, 15) for i in range(25)]
+# print(data)
+
+
+path = bidirectional_a_star(data, start, goal)
 
 print("path:", path)
 print("path length:", len(path))
@@ -193,30 +204,45 @@ print(res.success)
 print(res.message)
 print(len(res.x))
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
 
 # Show the plot
 z = np.arange(data.shape[0])
 x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 
 X, Y = np.meshgrid(x, y)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
 
-# for i, vertices in enumerate(list_of_vertices):
-#     utils.plot_wedge(vertices, ax)
+for i, vertices in enumerate(list_of_vertices):
+    for vertice in vertices:
+        ax.plot([vertice[0][1], vertice[1][1]], [vertice[0][0], vertice[1][0]], i, color='red')
+        ax.plot([vertice[1][1], vertice[2][1]], [vertice[1][0], vertice[2][0]], i, color='red')
+        ax.plot([vertice[2][1], vertice[3][1]], [vertice[2][0], vertice[3][0]], i, color='red')
+        ax.plot([vertice[3][1], vertice[0][1]], [vertice[3][0], vertice[0][0]], i, color='red')
 
-for i in range(0, data.shape[0]):
+
+x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
+
+X, Y = np.meshgrid(x, y)
+
+
+
+# for i in range(0, data.shape[0]):
    
-   sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='rainbow_alpha')
-cbar = plt.colorbar(sc, ax=ax, pad=0.1)
-cbar.set_label('Color Scale')
+#    sc =  ax.contourf(X, Y, data[i, :, :], 100, zdir='z', offset=i, cmap='binary')
+# cbar = plt.colorbar(sc, ax=ax, pad=0.1)
+# cbar.set_label('Color Scale')
 
-for i in range(0, len(int_X0), 2):
-    ax.scatter3D(res.x[i+1], res.x[i], int(i/2), color='red')
-    ax.scatter3D(int_X0[i+1], int_X0[i], int(i/2), color='blue')
+for i in range(0, len(int_X0)-2, 2):
+    ax.plot(int_X0[i+1], int_X0[i], int(i/2), 'o', color='blue', markersize=4, alpha=0.5)
+    ax.plot(res.x[i+1], res.x[i], int(i/2), 'o', color='green', markersize=4)
     
+ax.plot(int_X0[-1], int_X0[-2], 24, 'o', color='blue', markersize=4, label='Initial Path', alpha=0.5)
+ax.plot(res.x[-1], res.x[-2], 24, 'o', color='green', markersize=4, label='Optimal Path')
 
+    
+# voxels_transposed = np.transpose(data, (2, 1, 0))
+# ax.voxels(voxels_transposed, edgecolor='none', alpha=0.5)
 
 ax.set_zlim(0, new_shape[0])
 ax.set_xlim([-5000, 5000])
@@ -224,11 +250,14 @@ ax.set_ylim([-1000, 9000])
 ax.set_xlabel('X axis')
 ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
+ax.legend()
 
 title = "visualAvoidance2D/figures/success_two_across"
 # plt.savefig(title+'.png')
 
 plt.show()
+
+
 fig, ax = plt.subplots()
 
 x, y = np.linspace(-5000, 5000, 200), np.linspace(-1000, 9000, 200)
@@ -239,7 +268,8 @@ print("animating optimal path")
 def update(frame):
     ax.cla()
     ax.scatter(res.x[2*frame+1], res.x[2*frame])
-    utils.plot_wedge(list_of_vertices[frame], ax)
+    for vertice in list_of_vertices[frame]:
+        utils.plot_wedge(vertice, ax)
     ax.set_xlim([-5000, 5000])
     ax.set_ylim([-1000, 9000])
 
