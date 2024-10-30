@@ -77,10 +77,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 1
+num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -110,7 +110,7 @@ for i in range(25, 650):
         vertices = []
         for wedge in wedges:
             vertices.append(wedge.get_wedge_vertices(sim_time))
-        list_of_vertices.append(vertices[0])
+        list_of_vertices.append(vertices)
         if plot:
             ax.cla()
             for vertice in vertices:
@@ -137,7 +137,8 @@ ax.plot(ownship.state.pos.item(1), ownship.state.pos.item(0), 'bo')
 
 def animate(i):
     ax.cla()
-    utils.plot_wedge(list_of_vertices[i], ax)
+    for vertice in list_of_vertices[i]:
+        utils.plot_wedge(vertice, ax)
     ax.plot(ownship.state.pos.item(1), ownship.state.pos.item(0), 'bo')
     ax.set_xlim([-5000, 5000])
     ax.set_ylim([-1000, 9000])
