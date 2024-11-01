@@ -29,10 +29,10 @@ intruder1 = intruder1[cut:]
 intruder2 = intruder2[cut:]
 intruder3 = intruder3[cut:]
 
-# num_measurements = 25
-# window_size = 9
-num_measurements = 10
-window_size = 5
+num_measurements = 25
+window_size = 9
+# num_measurements = 10
+# window_size = 5
 
 mf1 = utils.MedianFilter(window_size)
 mf2 = utils.MedianFilter(window_size)
@@ -128,7 +128,7 @@ np.save('visualAvoidance2D/data/vertices.npy', np.array(list_of_vertices))
 
 
 # now animate the plot
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(dpi=300)
 ax.set_xlim([-5000, 5000])
 ax.set_ylim([-1000, 9000])
 ax.set_aspect('equal')
@@ -142,7 +142,9 @@ def animate(i):
     ax.plot(ownship.state.pos.item(1), ownship.state.pos.item(0), 'bo')
     ax.set_xlim([-5000, 5000])
     ax.set_ylim([-1000, 9000])
-    # ax.set_title(f"Time = {round(sim_time,2)}")
+    ax.set_title(f"3 Intruders")
+    ax.set_xlabel('East')
+    ax.set_ylabel('North')
     return ax
 
 ani = animation.FuncAnimation(fig, animate, frames=len(list_of_vertices), interval=100)
