@@ -1,5 +1,11 @@
-import numpy as np
+import jax.numpy as np
+import jax
 import matplotlib.pyplot as plt
+import numpy
+
+# Enable 64-bit precision globally
+jax.config.update("jax_enable_x64", True)
+
 
 def compute_cross_product2D(a, b):
     return a[0]*b[1] - a[1]*b[0]
@@ -139,4 +145,38 @@ def distance_function(p, vertices):
     
     if is_in_v4(p, vertices):
         return -compute_distance(p, vertices[3])
-    
+
+def objective_function_with_constraints(x, goalPosition=(20,20), vertices_list=None):
+    '''Calculate the difference between the goal position and the current
+    position of the distance'''
+    res = 0
+    res = np.linalg.norm(np.array([x[-2], x[-1]]) - np.array(goalPosition))**2
+    # res = (x[-2] - goalPosition[0])**2 + (x[-1] - goalPosition[1])**2
+
+    # dis = distance_function(np.array([x[-2], x[-1]]), vertices_list)
+    # res += np.exp(distance_function(np.array([x[-2], x[-1]]), vertices_list)) - 1
+
+    for i in range(0, len(x)-2, 2):
+        for vertices in vertices_list[i//2]:
+            res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
+
+    return res
+
+objective_grad = jax.grad(objective_function_with_constraints)
+
+def objective_function_with_constraints_gradient(x, goalPosition=(20,20), vertices_list=None):
+    return numpy.asarray(objective_grad(x, goalPosition, vertices_list))
+
+def testing_jax():
+    x = np.array([-0.5, .25, 3, 4])
+    vertices = np.array([[[1,1],[1,0],[0,0],[0,1]], [[3,3],[3,2],[2,2],[2,3]]])
+    print(vertices)
+    print(objective_function_with_constraints(x, goalPosition=(5,5), vertices_list=vertices))
+    print(objective_grad(x, goalPosition=(5,5), vertices_list=vertices))
+
+
+
+
+if __name__ == '__main__':
+    testing_jax()
+    print('Done')

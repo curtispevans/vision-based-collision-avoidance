@@ -11,6 +11,7 @@ from scipy import ndimage
 
 import utilities as utils
 from pathplannerutility import *
+from objective_function_ideas import objective_function_with_constraints_gradient, objective_function_with_constraints
 
 # set the simulation time
 sim_time = 0
@@ -169,22 +170,23 @@ print(binary_matrix.shape)
 # path = [(i, i, 15) for i in range(25)]
 # print(data)
 
-
+astarTime = time.time()
 path = bidirectional_a_star(data, start, goal)
+print(f'A* took {round(time.time() - astarTime,2)} seconds')
 
 print("path:", path)
 print("path length:", len(path))
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
 
-voxels_transposed = np.transpose(data, (2, 1, 0))
-ax.voxels(voxels_transposed, edgecolor='none', alpha=0.5)
+# voxels_transposed = np.transpose(data, (2, 1, 0))
+# ax.voxels(voxels_transposed, edgecolor='none', alpha=0.5)
 
-for i in range(0, len(path)):
-    ax.plot(path[i][2], path[i][1], path[i][0], 'o', color='blue', markersize=4)
+# for i in range(0, len(path)):
+#     ax.plot(path[i][2], path[i][1], path[i][0], 'o', color='blue', markersize=4)
 
-plt.show()
+# plt.show()
 
 int_X0 = []
 past = -1
@@ -196,16 +198,16 @@ for i in range(0, len(path)):
     past = path[i][0]
 
 array_X0 = np.array(int_X0).reshape(len(int_X0)//2, 2).T
-new_X0 = []
+# new_X0 = []
 
-for i in range(0, len(int_X0)-2, 2):
-    new_X0.append(int_X0[i])
-    new_X0.append(int_X0[i+1])
-    new_X0.append((int_X0[i] + int_X0[i+2])/2)
-    new_X0.append((int_X0[i+1] + int_X0[i+3])/2)
+# for i in range(0, len(int_X0)-2, 2):
+#     new_X0.append(int_X0[i])
+#     new_X0.append(int_X0[i+1])
+#     new_X0.append((int_X0[i] + int_X0[i+2])/2)
+#     new_X0.append((int_X0[i+1] + int_X0[i+3])/2)
 
-new_X0.append(int_X0[-2])
-new_X0.append(int_X0[-1])
+# new_X0.append(int_X0[-2])
+# new_X0.append(int_X0[-1])
 
 print("int_X0:", int_X0)
 print("len(int_X0):", len(int_X0))
@@ -217,11 +219,12 @@ print("goal_point:", goal_point)
 int_X0 = np.array(int_X0)
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 500.)
+
 
 array_of_vertices = np.array(list_of_vertices).reshape(25,2,4,2)
 bounds_for_optimization = None
-res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,), method='SLSQP', jac='2-point', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
+res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,), jac=objective_function_with_constraints_gradient, method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
