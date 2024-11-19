@@ -83,8 +83,8 @@ def test_distance_function():
     Z2 = np.zeros_like(X)
     for i in range(len(x)):
         for j in range(len(y)):
-            Z1[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/25) - 1 
-            Z2[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices2)/25) - 1
+            Z1[i,j] = distance_function(np.array([X[i,j], Y[i,j]]), vertices)
+            Z2[i,j] = distance_function(np.array([X[i,j], Y[i,j]]), vertices2)
     Z = Z1 + Z2
     print(np.min(Z))
     fig = plt.figure()
