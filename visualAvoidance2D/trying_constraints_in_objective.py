@@ -195,6 +195,7 @@ for i in range(0, len(path)):
         int_X0.append(scaler_shift*path[i][2]-5000)
     past = path[i][0]
 
+array_X0 = np.array(int_X0).reshape(len(int_X0)//2, 2).T
 new_X0 = []
 
 for i in range(0, len(int_X0)-2, 2):
@@ -208,17 +209,19 @@ new_X0.append(int_X0[-1])
 
 print("int_X0:", int_X0)
 print("len(int_X0):", len(int_X0))
-start_point = [scaler_shift*start[1]-1000, scaler_shift*start[2]-5000]
+start_point = np.array([scaler_shift*start[1]-1000, scaler_shift*start[2]-5000])
 print("start_point:", start_point)
-goal_point = [scaler_shift*goal[1]-1000, scaler_shift*goal[2]-5000]
+goal_point = np.array([scaler_shift*goal[1]-1000, scaler_shift*goal[2]-5000])
 print("goal_point:", goal_point)
 
+int_X0 = np.array(int_X0)
 print('Starting optimization...')
 start = time.time()
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
 
+array_of_vertices = np.array(list_of_vertices).reshape(25,2,4,2)
 bounds_for_optimization = None
-res = minimize(objective_function_with_constraints, int_X0, args=((goal_point[0], goal_point[1]),list_of_vertices,), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
+res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,), method='SLSQP', jac='2-point', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)

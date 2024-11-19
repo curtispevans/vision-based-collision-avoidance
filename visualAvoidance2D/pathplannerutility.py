@@ -115,11 +115,20 @@ def bidirectional_a_star(grid, start, goal):
 def con_cltr_pnt(x, start_point):
     con = []
     # NOTE using the square root is probably not necessary but I cant get it to work without it. I square the bounded distance and it still won't work
-    dist = np.sqrt((start_point[0]-x[0])**2 + (start_point[1]-x[1])**2)
-    con.append(dist)
-    for i in range(0, len(x)-2, 2):
-        dist = np.sqrt((x[i]-x[i+2])**2 + (x[i+1]-x[i+3])**2)
-        con.append(dist)
+    con = np.zeros(len(x)//2)
+    x_temp = x.reshape(len(x)//2, 2).T
+    # con = []
+    dist = np.linalg.norm(x_temp[:,0] - start_point)
+    con[0] = dist
+    # con.append(dist)
+
+    # diff = np.array([np.sqrt((x[i]-x[i+2])**2 + (x[i+1]-x[i+3])**2) for i in range(0, len(x)-2, 2)])
+    diff = np.diff(x_temp)
+    dist = np.linalg.norm(diff, axis=0)
+    con[1:] = dist
+    # for i in range(0, len(x)-2, 2):
+    #     dist = (x[i]-x[i+2])**2 + (x[i+1]-x[i+3])**2
+    #     con.append(dist)
     # print(con)
     return con
 
@@ -253,9 +262,8 @@ def objective_function_with_constraints(x, goalPosition=(20,20), vertices_list=N
     # res = np.linalg.norm(np.array([x[-2], x[-1]]) - np.array(goalPosition))
     res = (x[-2] - goalPosition[0])**2 + (x[-1] - goalPosition[1])**2
 
-    for i in range(0, len(x), 2):
+    for i in range(0, len(x)-2, 2):
         for vertices in vertices_list[i//2]:
-            vertices = vertices.reshape(4,2).copy()
             res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
     
     # res - 1

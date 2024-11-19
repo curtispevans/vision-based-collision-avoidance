@@ -1,11 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-from scipy.optimize import minimize, NonlinearConstraint, differential_evolution
-from matplotlib import cm
 from matplotlib import animation
-from matplotlib.colors import LinearSegmentedColormap
-from scipy.interpolate import BSpline
 
 import utilities as utils
 from pathplannerutility import *
