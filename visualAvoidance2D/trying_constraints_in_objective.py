@@ -76,10 +76,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 2
+num_intruders = 1
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -160,11 +160,11 @@ new_shape = (25, 25, 25)
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 13)
-goal = (new_shape[0]-1, new_shape[1]-1, 13)
+start = (0, 0, 1)
+goal = (new_shape[0]-1, new_shape[1]-1, 1)
 print("start point:",start, "goal point:", goal)
 
-binary_matrix = binarize_matrix(data, 5e-8)
+binary_matrix = binarize_matrix(data, 1e-8)
 print(binary_matrix.shape)
 
 # path = [(i, i, 15) for i in range(25)]
@@ -177,16 +177,16 @@ print(f'A* took {round(time.time() - astarTime,2)} seconds')
 print("path:", path)
 print("path length:", len(path))
 
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
 
-# voxels_transposed = np.transpose(data, (2, 1, 0))
-# ax.voxels(voxels_transposed, edgecolor='none', alpha=0.5)
+voxels_transposed = np.transpose(data, (2, 1, 0))
+ax.voxels(voxels_transposed, edgecolor='none', alpha=0.5)
 
-# for i in range(0, len(path)):
-#     ax.plot(path[i][2], path[i][1], path[i][0], 'o', color='blue', markersize=4)
+for i in range(0, len(path)):
+    ax.plot(path[i][2], path[i][1], path[i][0], 'o', color='blue', markersize=4)
 
-# plt.show()
+plt.show()
 
 int_X0 = []
 past = -1
@@ -222,9 +222,9 @@ start = time.time()
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 500.)
 
 
-array_of_vertices = np.array(list_of_vertices).reshape(25,2,4,2)
+array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
 bounds_for_optimization = None
-res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,),  method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
+res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,),  method='SLSQP', jac=objective_function_with_constraints_gradient, bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)

@@ -156,7 +156,7 @@ def objective_function_with_constraints(x, goalPosition=(20,20), vertices_list=N
     # dis = distance_function(np.array([x[-2], x[-1]]), vertices_list)
     # res += np.exp(distance_function(np.array([x[-2], x[-1]]), vertices_list)) - 1
 
-    for i in range(0, len(x)-2, 2):
+    for i in range(0, len(x), 2):
         for vertices in vertices_list[i//2]:
             res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
 
@@ -169,12 +169,11 @@ def objective_function_with_constraints_gradient(x, goalPosition=(20,20), vertic
 
 def testing_jax():
     x = np.array([-0.5, .25, 3, 4])
-    vertices = np.array([[[1,1],[1,0],[0,0],[0,1]], [[3,3],[3,2],[2,2],[2,3]]])
-    print(vertices)
-    print(objective_function_with_constraints(x, goalPosition=(5,5), vertices_list=vertices))
-    print(objective_grad(x, goalPosition=(5,5), vertices_list=vertices))
-
-
+    vertices = np.array([[[[1,1],[1,0],[0,0],[0,1]], [[3,3],[3,2],[2,2],[2,3]]],
+                         [[[5,5],[5,4],[4,4],[4,5]], [[7,7],[7,6],[6,6],[6,7]]]])
+    print(vertices.shape)
+    print(objective_function_with_constraints(x, goalPosition=(10,10), vertices_list=vertices))
+    print(objective_grad(x, goalPosition=(10,10), vertices_list=vertices))
 
 
 if __name__ == '__main__':
