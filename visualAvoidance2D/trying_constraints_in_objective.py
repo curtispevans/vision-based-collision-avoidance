@@ -224,7 +224,7 @@ nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 500.)
 
 array_of_vertices = np.array(list_of_vertices).reshape(25,2,4,2)
 bounds_for_optimization = None
-res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,), jac=objective_function_with_constraints_gradient, method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
+res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,),  method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
