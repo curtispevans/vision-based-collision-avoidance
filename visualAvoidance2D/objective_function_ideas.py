@@ -160,3 +160,12 @@ def is_inside_wedge_vectorized(points, vertices):
     right, bottom, left, top = compute_relevant_cross_products_vectorized(points, vertices)
     inside = np.logical_and(np.logical_and(right < 0, bottom < 0), np.logical_and(left < 0, top < 0))
     return inside
+
+def distance_constraint(x, vertice_list):
+    distances = np.zeros(len(x)//2)
+
+    for i in range(0, len(x), 2):
+        for vertices in vertice_list[i//2]:
+            distances[i//2] += distance_function(np.array([x[i], x[i+1]]), vertices)
+
+    return distances

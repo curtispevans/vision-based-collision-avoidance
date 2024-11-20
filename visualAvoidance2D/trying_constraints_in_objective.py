@@ -78,7 +78,7 @@ wedges = []
 num_intruders = 2
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -217,11 +217,13 @@ print("goal_point:", goal_point)
 int_X0 = np.array(int_X0)
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
-
 array_of_vertices = np.array(list_of_vertices).reshape(25,2,4,2)
+
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
+dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -3)
+
 bounds_for_optimization = None
-res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,), method='SLSQP', jac='2-point', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
+res = minimize(object_function_new, int_X0, args=(np.array([goal_point[0], goal_point[1]]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
@@ -276,7 +278,7 @@ ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
 ax.legend()
 
-title = "visualAvoidance2D/figures/success_two_across"
+title = "visualAvoidance2D/figures/distance_constraint"
 # plt.savefig(title+'.png')
 
 plt.show()
