@@ -155,9 +155,14 @@ def objective_function_with_constraints(x, goalPosition=(20,20), vertices_list=N
 
     # dis = distance_function(np.array([x[-2], x[-1]]), vertices_list)
     # res += np.exp(distance_function(np.array([x[-2], x[-1]]), vertices_list)) - 1
-
+    jax.debug.print('x: {}', x)
     for i in range(0, len(x), 2):
         for vertices in vertices_list[i//2]:
+            # print('vertices:', vertices)
+            # jax.debug.print('x0: {}', x[i])
+            # jax.debug.print('x1: {}', x[i+1])
+            dist = distance_function(np.array([x[i], x[i+1]]), vertices)
+            # print('dist:', dist)
             res += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
 
     return res

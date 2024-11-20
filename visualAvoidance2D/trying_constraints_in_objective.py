@@ -160,8 +160,8 @@ new_shape = (25, 25, 25)
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 1)
-goal = (new_shape[0]-1, new_shape[1]-1, 1)
+start = (0, 0, 5)
+goal = (new_shape[0]-1, new_shape[1]-1, 10)
 print("start point:",start, "goal point:", goal)
 
 binary_matrix = binarize_matrix(data, 1e-8)
@@ -219,12 +219,12 @@ print("goal_point:", goal_point)
 int_X0 = np.array(int_X0)
 print('Starting optimization...')
 start = time.time()
-nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 500.)
+nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 600.)
 
 
 array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
 bounds_for_optimization = None
-res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,),  method='SLSQP', jac=objective_function_with_constraints_gradient, bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
+res = minimize(objective_function_with_constraints, int_X0, args=(np.array([goal_point[0], goal_point[1]]),array_of_vertices,), jac=objective_function_with_constraints_gradient,   method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc,], )
 
 print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
