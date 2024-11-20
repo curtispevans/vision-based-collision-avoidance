@@ -131,6 +131,20 @@ def test_vertices():
 
         plt.show()
     
+def test_compute_relavant_cross_products_vectorized():
+    points = np.array([[0,0], [1,1], [2,2], [3,3]])
+    vertices = np.array([[3,3],[3,1],[1,1],[1,3]])
+    print(compute_relevant_cross_products_vectorized(points, vertices))
+
+def test_is_inside_wedge_vectorized():
+    x, y = np.linspace(0, 5, 100), np.linspace(0, 5, 100)
+    X, Y = np.meshgrid(x, y)
+    points = np.stack((X.flatten(), Y.flatten()), axis=1)
+    vertices = np.array([[3,3],[3,1],[1,1],[1,3]])
+    is_in = is_inside_wedge_vectorized(points, vertices)
+    Z = is_in.reshape(X.shape)
+    plt.contourf(X, Y, Z, cmap='viridis')
+    plt.show()
 
 if __name__ == '__main__':
     # test1()
@@ -144,5 +158,7 @@ if __name__ == '__main__':
     # test_in_v3_range()
     # test_in_v4_range()
     # print('All tests passed')
-    test_distance_function()
+    # test_distance_function()
     # test_vertices()
+    # test_compute_relavant_cross_products_vectorized()
+    test_is_inside_wedge_vectorized()

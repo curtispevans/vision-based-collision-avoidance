@@ -163,7 +163,7 @@ start = (0, 0, 13)
 goal = (new_shape[0]-1, new_shape[1]-1, 13)
 print("start point:",start, "goal point:", goal)
 
-binary_matrix = binarize_matrix(data, 5e-8)
+binary_matrix = binarize_matrix(data, 0)
 print(binary_matrix.shape)
 
 # path = [(i, i, 15) for i in range(25)]

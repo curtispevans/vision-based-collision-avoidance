@@ -139,4 +139,24 @@ def distance_function(p, vertices):
     
     if is_in_v4(p, vertices):
         return -compute_distance(p, vertices[3])
-    
+
+def compute_cross_product2D_vectorized(a, b):
+    return a[:,0]*b[:,1] - a[:,1]*b[:,0]
+
+def compute_relevant_cross_products_vectorized(points, vertices):
+    '''The vertices come in a list of 4 points, with the first point being the top right point of the wedge, 
+       the second point being the bottom right point of the wedge, the third point being the bottom left point of the wedge,
+       and the fourth point being the top left point of the wedge.'''
+    right = compute_cross_product2D_vectorized(vertices[0]-points, vertices[1]-points)
+    bottom = compute_cross_product2D_vectorized(vertices[1]-points, vertices[2]-points)
+    left = compute_cross_product2D_vectorized(vertices[2]-points, vertices[3]-points)
+    top = compute_cross_product2D_vectorized(vertices[3]-points, vertices[0]-points)
+    return right, bottom, left, top
+
+def is_inside_wedge_vectorized(points, vertices):
+    '''The vertices come in a list of 4 points, with the first point being the top right point of the wedge, 
+       the second point being the bottom right point of the wedge, the third point being the bottom left point of the wedge,
+       and the fourth point being the top left point of the wedge.'''
+    right, bottom, left, top = compute_relevant_cross_products_vectorized(points, vertices)
+    inside = np.logical_and(np.logical_and(right < 0, bottom < 0), np.logical_and(left < 0, top < 0))
+    return inside
