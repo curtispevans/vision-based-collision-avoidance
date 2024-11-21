@@ -220,7 +220,7 @@ start = time.time()
 array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
 
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
-dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -10)
+dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -5)
 
 bounds_for_optimization = None
 res = minimize(object_function_new, int_X0, args=(np.array([goal_point[0], goal_point[1]]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
