@@ -162,11 +162,11 @@ def is_inside_wedge_vectorized(points, vertices):
     return inside
 
 def distance_constraint(x, vertice_list):
-    distances = np.zeros(len(x)//2)
+    distances = []
 
     for i in range(0, len(x), 2):
         for vertices in vertice_list[i//2]:
-            distances[i//2] += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
+            distances.append(distance_function(np.array([x[i], x[i+1]]), vertices))
 
-    print(distances)
+    # print(distances)
     return distances
