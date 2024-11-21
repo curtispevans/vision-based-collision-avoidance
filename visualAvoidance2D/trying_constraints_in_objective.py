@@ -75,10 +75,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 2
+num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -217,10 +217,10 @@ print("goal_point:", goal_point)
 int_X0 = np.array(int_X0)
 print('Starting optimization...')
 start = time.time()
-array_of_vertices = np.array(list_of_vertices).reshape(25,2,4,2)
+array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
 
 nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 400.)
-dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -3)
+dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, 0)
 
 bounds_for_optimization = None
 res = minimize(object_function_new, int_X0, args=(np.array([goal_point[0], goal_point[1]]),), method='SLSQP', bounds=bounds_for_optimization, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )

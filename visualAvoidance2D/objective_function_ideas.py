@@ -166,6 +166,7 @@ def distance_constraint(x, vertice_list):
 
     for i in range(0, len(x), 2):
         for vertices in vertice_list[i//2]:
-            distances[i//2] += distance_function(np.array([x[i], x[i+1]]), vertices)
+            distances[i//2] += np.exp(distance_function(np.array([x[i], x[i+1]]), vertices)) - 1
 
+    print(distances)
     return distances
