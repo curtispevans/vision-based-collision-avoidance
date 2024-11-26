@@ -5,7 +5,6 @@ import jax.numpy as jnp
 def motion_model(x, delta_t):
     '''
     x: state vector
-    u: control vector
     delta_t: time step
     '''
     bearing_dot_relative_velocity = x[0]*x[3] + x[1]*x[4]
@@ -16,8 +15,8 @@ def motion_model(x, delta_t):
                    -x[4]*bearing_dot_relative_velocity,
                    0,
                    0])
-
-    return x + f*delta_t
+    noise = jnp.array([0, 0, 0, np.random.normal(0, 0.1), np.random.normal(0, 0.1), 0, 0])
+    return x + (f + noise)*delta_t
 
 def jacobian_jax(x, delta_t):
     return jacfwd(motion_model)(x, delta_t)
