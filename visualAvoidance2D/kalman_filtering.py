@@ -1,6 +1,7 @@
 import numpy as np
 from jax import jacfwd, jacrev, jacobian
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
 
 def motion_model(x, delta_t):
     '''
@@ -52,8 +53,11 @@ def testing_jacobian():
 
 def testing_kalman_update():
     intruder = jnp.load('visualAvoidance2D/data/intruder2.npy')
-    mu = jnp.array([jnp.cos(intruder[0,0]), jnp.sin(intruder[0,0]), intruder[0,1], 0, 0, 75, 10])
+    mu = jnp.array([jnp.cos(intruder[0,0]), jnp.sin(intruder[0,0]), intruder[0,1], 10, -30, 75, 10])
     sigma = jnp.eye(7)
+
+    angles = []
+    sizes = []
 
     for row in intruder:
         measurement = jnp.array([jnp.cos(row[0]), jnp.sin(row[0]), row[1]])
@@ -61,7 +65,21 @@ def testing_kalman_update():
         Q = jnp.eye(3)*0.1
         delta_t = 1/25
         mu, sigma = kalman_update(mu, sigma, measurement, R, Q, delta_t)
-        print(mu)
+        angles.append(np.arccos(mu[0]))
+        sizes.append(mu[2])
+        # print(mu[:2].T @ measurement[:2])
+        print(mu[-2:])
+
+    plt.plot(angles, label='Estimated')
+    plt.plot(intruder[:,0], label='Measured')
+    plt.legend()
+    plt.show()
+
+    plt.plot(sizes, label='Estimated')
+    plt.plot(intruder[:,1], label='Measured')
+    plt.legend()
+    plt.show()
+    
         
 
 testing_kalman_update()
