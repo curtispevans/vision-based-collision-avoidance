@@ -37,7 +37,7 @@ def kalman_update(mu, sigma, measurement, R, Q, delta_t):
     # Update
     z, H = measurement_model(mu_bar)
     S = H@sigma_bar@H.T + Q
-    K = sigma_bar@H.T@jnp.linalg.inv(S)
+    K = sigma_bar@H.T@np.linalg.inv(S)
     mu = mu_bar + K@(measurement - z)
     sigma = (jnp.eye(len(K)) - K@H)@sigma_bar
 
@@ -54,24 +54,31 @@ def testing_jacobian():
 def testing_kalman_update():
     intruder = jnp.load('visualAvoidance2D/data/intruder2.npy')
     mu = jnp.array([jnp.cos(intruder[0,0]), jnp.sin(intruder[0,0]), intruder[0,1], 10, -30, 75, 10])
-    sigma = jnp.eye(7)
+    sigma = jnp.eye(7)*0.1
 
-    angles = []
+    x_pos = []
+    y_pos = []
     sizes = []
+    angles = []
+
+    R = jnp.eye(7)*0.1
+    Q = jnp.eye(3)*0.1
+    delta_t = 1/25
 
     for row in intruder:
-        measurement = jnp.array([jnp.cos(row[0]), jnp.sin(row[0]), row[1]])
-        R = jnp.eye(7)*0.1
-        Q = jnp.eye(3)*0.1
-        delta_t = 1/25
+        measurement = jnp.array([jnp.cos(row[0]), jnp.sin(row[0]), row[1]])        
         mu, sigma = kalman_update(mu, sigma, measurement, R, Q, delta_t)
-        angles.append(np.arccos(mu[0]))
+        x_pos.append(mu[0])
+        y_pos.append(mu[1])
         sizes.append(mu[2])
+        angles.append(np.arctan2(mu[1], mu[0]))
         # print(mu[:2].T @ measurement[:2])
-        print(mu[-2:])
+        # print(mu[-2:])
 
-    plt.plot(angles, label='Estimated')
-    plt.plot(intruder[:,0], label='Measured')
+    print(mu)
+
+    plt.polar(angles, np.ones_like(angles), 'o', label='Estimated')
+    plt.polar(intruder[:,0], np.ones_like(intruder[:,0]), 'o', label='Measured')
     plt.legend()
     plt.show()
 
