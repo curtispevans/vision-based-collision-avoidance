@@ -75,10 +75,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 3
+num_intruders = 2
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -278,7 +278,7 @@ ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
 ax.legend()
 
-title = "visualAvoidance2D/figures/distance_constraint"
+title = "visualAvoidance2D/figures/path_2_intruders"
 # plt.savefig(title+'.png')
 
 plt.show()

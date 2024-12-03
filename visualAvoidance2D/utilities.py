@@ -12,7 +12,8 @@ uav_wingspan = 24
 uav_size = uav_scale * uav_wingspan
 
 # parameters for the wedge estimator
-bearing_uncertainty = 0.03
+bearing_uncertainty = 0.03 # calculated from the camera
+# bearing_uncertainty = 0.05
 
 # This is the smallest pixel area that an intruder could possibly be
 min_area = 10
