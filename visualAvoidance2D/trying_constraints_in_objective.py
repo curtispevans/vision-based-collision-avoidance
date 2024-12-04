@@ -75,10 +75,10 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 2
+num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i+1], sizes_list[i+1], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
@@ -229,6 +229,7 @@ print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
 print(res.message)
 print(len(res.x))
+# np.save('visualAvoidance2D/data/optimal_path.npy', res.x)
 
 
 # Show the plot

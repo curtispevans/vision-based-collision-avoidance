@@ -16,9 +16,9 @@ bearing_uncertainty = 0.03 # calculated from the camera
 # bearing_uncertainty = 0.05
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 10
+min_area = 2
 # This is the largest pixel area that an intruder could possibly be
-max_area = 75
+max_area = 15
 
 ############################################################################################################
 
