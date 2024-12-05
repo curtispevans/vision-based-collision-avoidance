@@ -20,11 +20,19 @@ def get_knot_points(num_control_points, degree):
     return knots
 
 k = 3
-c = np.array([[-1,-1],[0,0], [3,3], [0,5], [-2,4], [-3,2], [-1,0]])
-knots = get_knot_points(len(c), k)
-spl = BSpline(knots, c, k)
-t = np.linspace(0, 1, 100)
-curve = spl(t)
-plt.plot(c[:,0], c[:,1], 'bo', lw=4, alpha=0.7, label='BSpline')
-plt.plot(curve[:,0], curve[:,1], 'r-', lw=1, alpha=0.7, label='BSpline')
-plt.show()
+c = np.load('visualAvoidance2D/data/optimal_path.npy').reshape(-1,2)
+
+def get_bspline_path(control_points, degree):
+    knots = get_knot_points(len(control_points), degree)
+    spl = BSpline(knots, control_points, degree)
+    t = np.linspace(0, 1, len(control_points))
+    curve = spl(t)
+    return curve
+
+# curve = get_bspline_path(c, k)
+# # plotted as North East coordinates
+# plt.plot(c[:,1], c[:,0], 'bo', lw=4, alpha=0.7, label='BSpline')
+# plt.plot(curve[:,1], curve[:,0], 'r-', lw=1, alpha=0.7, label='BSpline')
+# plt.xlim([-5000, 5000])
+# plt.ylim([-1000, 9000])
+# plt.show()

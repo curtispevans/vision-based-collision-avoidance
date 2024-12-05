@@ -11,6 +11,7 @@ from scipy import ndimage
 
 import utilities as utils
 from pathplannerutility import *
+from plotting_bspline_trajectory import get_bspline_path
 
 # set the simulation time
 sim_time = 0
@@ -75,7 +76,7 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 3
+num_intruders = 2
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
     wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
@@ -229,6 +230,7 @@ print(f'Optimization done in {round(time.time() - start,2)} seconds')
 print(res.success)
 print(res.message)
 print(len(res.x))
+curve = get_bspline_path(res.x.reshape(-1,2), 3)
 # np.save('visualAvoidance2D/data/optimal_path.npy', res.x)
 
 
@@ -279,7 +281,7 @@ ax.set_ylabel('Y axis')
 ax.set_zlabel('Time axis')
 ax.legend()
 
-title = "visualAvoidance2D/figures/path_2_intruders"
+title = "visualAvoidance2D/figures/bspline_trajectory"
 # plt.savefig(title+'.png')
 
 plt.show()
@@ -294,7 +296,11 @@ X, Y = np.meshgrid(x, y)
 print("animating optimal path")
 def update(frame):
     ax.cla()
-    ax.scatter(res.x[2*frame+1], res.x[2*frame])
+    # ax.scatter(res.x[2*frame+1], res.x[2*frame])
+
+    ax.plot(curve[frame,1], curve[frame,0], 'go', label='BSpline')
+    ax.plot(curve[:frame,1], curve[:frame,0], 'g-', label='BSpline')
+    
     for vertice in list_of_vertices[frame]:
         utils.plot_wedge(vertice, ax)
     ax.set_xlim([-5000, 5000])
@@ -306,7 +312,7 @@ def update(frame):
 ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
 
 # Save the animation as an MP4 file
-# ani.save(title+'.mp4', writer='ffmpeg', fps=10)
+# ani.save(title+'.mp4', writer='ffmpeg', fps=10, dpi=300)
 plt.show()
 
 
