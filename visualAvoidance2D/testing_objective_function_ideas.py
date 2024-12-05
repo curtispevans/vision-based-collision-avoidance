@@ -2,6 +2,10 @@ from objective_function_ideas import *
 import numpy as np
 import matplotlib.pyplot as plt
 
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
+
 def test1():
     a = np.array([0, 2])
     b = np.array([2, 0])
@@ -73,11 +77,12 @@ def test_in_v4_range():
     test_helper_function(p, vertices)
 
 def test_distance_function():
-    n = 100
-    vertices = np.array([[n/2,n/2],[n/2, -n/2],[-n/2, -n/2],[-n/2,n/2]])
+    n = 1000
+    long = n/2
+    vertices = np.array([[n/4,long],[n/15, -long],[-n/15, -long],[-n/4,long]])
     vertices2 = vertices + 50
     # print(vertices.shape)
-    x, y = np.linspace(-2*n,2*n,100), np.linspace(-2*n,2*n,100)
+    x, y = np.linspace(-n,n,100), np.linspace(-n, n,100)
     X, Y = np.meshgrid(x, y)
     Z1 = np.zeros_like(X)
     Z2 = np.zeros_like(X)
@@ -85,21 +90,31 @@ def test_distance_function():
         for j in range(len(y)):
             Z1[i,j] = distance_function(np.array([X[i,j], Y[i,j]]), vertices)
             Z2[i,j] = distance_function(np.array([X[i,j], Y[i,j]]), vertices2)
-    Z = Z1 + Z2
+    Z = Z1 #+ Z2
     print(np.min(Z))
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
-            [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
-    ax.plot([vertices2[0,0], vertices2[1,0], vertices2[2,0], vertices2[3,0], vertices2[0,0]],
-            [vertices2[0,1], vertices2[1,1], vertices2[2,1], vertices2[3,1], vertices2[0,1]], 'hotpink', linewidth=2)
+    # ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
+    #         [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+    # ax.plot([vertices2[0,0], vertices2[1,0], vertices2[2,0], vertices2[3,0], vertices2[0,0]],
+    #         [vertices2[0,1], vertices2[1,1], vertices2[2,1], vertices2[3,1], vertices2[0,1]], 'hotpink', linewidth=2)
     ax.plot_surface(X, Y, Z, cmap='viridis')
     # ax.set_zlim([-1, 10])
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('distance')
-
+    ax.set_xlabel('E')
+    ax.set_ylabel('N')
+    ax.set_zlabel('Distance')
+    ax.set_title('Distance function')
+    plt.savefig('visualAvoidance2D/figures/distance_function.png', dpi=300)
     plt.show()
+
+    plt.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]],
+             [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'blue', linewidth=2)
+    plt.xlabel('E')
+    plt.ylabel('N')
+    plt.xlim([-n, n])
+    plt.ylim([-n, n])
+    plt.title('Wedge')
+    plt.savefig('visualAvoidance2D/figures/wedge.png', dpi=300)
 
 def test_vertices():
     list_of_vertices = np.load('visualAvoidance2D/data/vertices.npy')
@@ -118,8 +133,8 @@ def test_vertices():
                 Z[i,j] = np.exp(distance_function(np.array([X[i,j], Y[i,j]]), vertices)/500) - 1
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
-                [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+        # ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
+        #         [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
         
         ax.plot_surface(X, Y, Z, cmap='viridis')
         # add color bar

@@ -113,32 +113,34 @@ def get_distance_from_edge_with_point_inside_wedge(p, vertices):
     return min(distances)
 
 def distance_function(p, vertices):
-    if is_inside_wedge(p, vertices):
+    right, bottom, left, top = compute_relavant_cross_products(p, vertices)
+    logic = np.array([right, bottom, left, top])
+    if sum(logic < 0) == 4:
         return get_distance_from_edge_with_point_inside_wedge(p, vertices)
     
-    elif is_in_e1(p, vertices):
-        return -compute_distance_to_edge(p, vertices[0], vertices[1])
-    
-    elif is_in_e2(p, vertices):
+    if sum(logic > 0) == 2:
+        if right >= 0 and bottom >= 0:
+            return -compute_distance(p, vertices[1])
+        elif bottom >= 0 and left >= 0:
+            return -compute_distance(p, vertices[2])
+        elif left >= 0 and top >= 0:
+            return -compute_distance(p, vertices[3])
+        elif top >= 0 and right >= 0:
+            return -compute_distance(p, vertices[0])
+        
+    if sum(logic > 0) == 1:
+        if right >= 0:
+            return -compute_distance_to_edge(p, vertices[0], vertices[1])
+        elif bottom >= 0:
+            return -compute_distance_to_edge(p, vertices[1], vertices[2])
+        elif left >= 0:
+            return -compute_distance_to_edge(p, vertices[2], vertices[3])
+        elif top >= 0:
+            return -compute_distance_to_edge(p, vertices[3], vertices[0])
+        
+    if sum(logic > 0) == 3:
         return -compute_distance_to_edge(p, vertices[1], vertices[2])
     
-    elif is_in_e3(p, vertices):
-        return -compute_distance_to_edge(p, vertices[2], vertices[3])
-    
-    elif is_in_e4(p, vertices):
-        return -compute_distance_to_edge(p, vertices[3], vertices[0])
-    
-    elif is_in_v1(p, vertices):
-        return -compute_distance(p, vertices[0])
-    
-    elif is_in_v2(p, vertices):
-        return -compute_distance(p, vertices[1])
-    
-    elif is_in_v3(p, vertices):
-        return -compute_distance(p, vertices[2])
-    
-    elif is_in_v4(p, vertices):
-        return -compute_distance(p, vertices[3])
 
 def compute_cross_product2D_vectorized(a, b):
     return a[:,0]*b[:,1] - a[:,1]*b[:,0]
@@ -162,13 +164,10 @@ def is_inside_wedge_vectorized(points, vertices):
     return inside
 
 def distance_constraint(x, vertice_list):
-    # distances = []
     distances = np.zeros(len(x)//2)
 
     for i in range(0, len(x), 2):
         for vertices in vertice_list[i//2]:
-            # distances.append(distance_function(np.array([x[i], x[i+1]]), vertices))
             distances[i//2] += distance_function(np.array([x[i], x[i+1]]), vertices)
 
-    # print(distances)
     return distances

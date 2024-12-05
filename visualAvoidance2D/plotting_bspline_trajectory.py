@@ -25,7 +25,7 @@ c = np.load('visualAvoidance2D/data/optimal_path.npy').reshape(-1,2)
 def get_bspline_path(control_points, degree):
     knots = get_knot_points(len(control_points), degree)
     spl = BSpline(knots, control_points, degree)
-    t = np.linspace(0, 1, len(control_points))
+    t = np.linspace(0, 1, 100)
     curve = spl(t)
     return curve
 

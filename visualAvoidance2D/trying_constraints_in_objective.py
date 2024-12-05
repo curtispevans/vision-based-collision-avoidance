@@ -13,6 +13,10 @@ import utilities as utils
 from pathplannerutility import *
 from plotting_bspline_trajectory import get_bspline_path
 
+##################################################################
+# TODO: this can be its own function
+# intialize all the wedges
+
 # set the simulation time
 sim_time = 0
 start = time.time()
@@ -76,11 +80,14 @@ for i in range(shift_index, num_measurements):
 
 # now initialize the wedges
 wedges = []
-num_intruders = 2
+num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
     wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
     wedges.append(wedge_estimator)
+
+############################################################################################################
+
 
 print(f"Initialized the wedges after {round(time.time() - start,2)} seconds")
 start = time.time()
@@ -91,24 +98,22 @@ plot = False
 if plot:
     fig, ax = plt.subplots()# set the simulation time
 
+##########################################################################################################
+# TODO: this can be its own function
+# take the wedges and get the sum of the wedges returned to a (25,25,25) for the A* algorithm
+
 zoom = 25000
 x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
 X, Y = np.meshgrid(x, y)
 
 list_of_vertices = []
-pdf_map_list = []
+in_out_wedge_list = []
 
 for i in range(25, 650):
     sim_time += utils.ts_simulation
 
     # get the sum of the wedges
     if i % 25 == 0:
-        def pdf(xy,sim_time=sim_time):
-            return sum([wedge.get_wedge_single_gaussian(sim_time).pdf(xy) for wedge in wedges])
-        
-        # Z = pdf(np.dstack((Y,X)))
-        # pdf_map_list.append(Z)
-
         Z = np.zeros((25, 25))
         vertices = []
         points = np.vstack((Y.ravel(), X.ravel())).T
@@ -118,7 +123,7 @@ for i in range(25, 650):
             Z += utils.are_inside_wedge(points, vertice).reshape(25, 25)
         list_of_vertices.append(vertices)
 
-        pdf_map_list.append(Z)
+        in_out_wedge_list.append(Z)
         if plot:
             ax.cla()
             for vertice in vertices:
@@ -132,7 +137,7 @@ for i in range(25, 650):
 if plot:
     plt.show()
 
-
+###############################################################################################
 
 
 # get colormap
@@ -148,7 +153,7 @@ map_object = LinearSegmentedColormap.from_list(name='rainbow_alpha',colors=color
 # register this new colormap with matplotlib
 plt.colormaps.register(cmap=map_object)
 
-data = np.array(pdf_map_list)
+data = np.array(in_out_wedge_list)
 
 original_shape = data.shape
 print("Original shape:", original_shape)
@@ -298,8 +303,10 @@ def update(frame):
     ax.cla()
     # ax.scatter(res.x[2*frame+1], res.x[2*frame])
 
-    ax.plot(curve[frame,1], curve[frame,0], 'go', label='BSpline')
-    ax.plot(curve[:frame,1], curve[:frame,0], 'g-', label='BSpline')
+    time_with_frame = frame*4
+    # print(frame, time_with_frame)
+    ax.plot(curve[:,1], curve[:,0], 'g-', label='BSpline')
+    ax.plot(curve[time_with_frame,1], curve[time_with_frame,0], 'bo', label='BSpline')
     
     for vertice in list_of_vertices[frame]:
         utils.plot_wedge(vertice, ax)
