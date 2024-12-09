@@ -319,7 +319,7 @@ def update(frame):
 ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
 
 # Save the animation as an MP4 file
-# ani.save(title+'.mp4', writer='ffmpeg', fps=10, dpi=300)
+ani.save(title+'.mp4', writer='ffmpeg', fps=10, dpi=300)
 plt.show()
 
 
