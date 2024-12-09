@@ -47,7 +47,8 @@ mf1.fit(list(intruder1[:window_size-1,1]))
 mf2.fit(list(intruder2[:window_size-1,1]))
 mf3.fit(list(intruder3[:window_size-1,1]))
 
-shift_index = int(np.median(np.arange(window_size)))
+shift_index = int(np.median(np.arange(window_size))) + 1
+print(shift_index)
 
 # get bearing lists
 bearings_list = [intruder1[shift_index:num_measurements,0], intruder2[shift_index:num_measurements,0], intruder3[shift_index:num_measurements,0]]
@@ -56,7 +57,7 @@ intruder1_size = []
 intruder2_size = []
 intruder3_size = []
 
-for i in range(window_size-1, num_measurements+shift_index):
+for i in range(window_size, num_measurements+shift_index-1):
     intruder1_size.append(mf1.predict(intruder1[i,1]))
     intruder2_size.append(mf2.predict(intruder2[i,1]))
     intruder3_size.append(mf3.predict(intruder3[i,1]))
@@ -79,6 +80,7 @@ for i in range(shift_index, num_measurements):
     sim_time += utils.ts_simulation
 
 # now initialize the wedges
+print(ownship_positions)
 wedges = []
 num_intruders = 3
 for i in range(num_intruders):
@@ -319,7 +321,7 @@ def update(frame):
 ani = animation.FuncAnimation(fig, update, frames=range(len(res.x)//2), repeat=False)
 
 # Save the animation as an MP4 file
-ani.save(title+'.mp4', writer='ffmpeg', fps=10, dpi=300)
+# ani.save(title+'.mp4', writer='ffmpeg', fps=10, dpi=300)
 plt.show()
 
 
