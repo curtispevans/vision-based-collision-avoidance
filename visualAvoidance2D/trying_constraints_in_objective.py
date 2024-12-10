@@ -85,7 +85,7 @@ wedges = []
 num_intruders = 3
 for i in range(num_intruders):
     wedge_estimator = utils.WedgeEstimator()
-    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions, ownship.state)
+    wedge_estimator.set_velocity_position(bearings_list[i], sizes_list[i], ownship_thetas, ownship_positions)
     wedges.append(wedge_estimator)
 
 ############################################################################################################

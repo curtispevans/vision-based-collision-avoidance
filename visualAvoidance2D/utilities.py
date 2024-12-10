@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 ############################################################################################################
 # global variables for the simulation
-ts_simulation = 1/25
+ts_simulation = 1/30
 
 uav_scale = 2
 # this is not to be changed - it is the pixel wingspan of the fixed wing vehicle as-drawn
@@ -16,9 +16,9 @@ bearing_uncertainty = 0.03 # calculated from the camera
 # bearing_uncertainty = 0.05
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 2
+min_area = 8
 # This is the largest pixel area that an intruder could possibly be
-max_area = 15
+max_area = 11
 
 ############################################################################################################
 
@@ -204,7 +204,7 @@ class WedgeEstimator:
         
 
 
-    def set_velocity_position(self, bearing_angles, sizes, thetas, ownship_positions, ownship_state):
+    def set_velocity_position(self, bearing_angles, sizes, thetas, ownship_positions):
         """Sets the position and velocity of the intruder based on two measurements
         
         Parameters:
@@ -234,26 +234,37 @@ class WedgeEstimator:
             R = rotation_matrix(theta)
             los_interial = R @ los_body
             # get the positions of the intruder
-            close_pos = ownship_pos + los_interial * intruder_min_range
-            far_pos = ownship_pos + los_interial * intruder_max_range
+            close_pos = ownship_pos + los_body * intruder_min_range
+            far_pos = ownship_pos + los_body * intruder_max_range
             # append the positions to the lists
             close_positions.append(close_pos)
             far_positions.append(far_pos)
         
+        # print('close_positions', close_positions)
         # save the ownship last position and velocity
         self.init_own_pos = ownship_positions[-1]
-        heading = np.array([[np.cos(ownship_state.theta)], [np.sin(ownship_state.theta)]])
-        self.init_own_vel = heading * ownship_state.vel
+        # heading = np.array([[np.cos(ownship_state.theta)], [np.sin(ownship_state.theta)]])
+        # self.init_own_vel = heading * ownship_state.vel
+        self.init_own_vel = np.diff(np.array(ownship_positions), axis=0)[-1] / self.ts
 
         # save the last positions and average velocities of the close position
         self.close_pos = close_positions[-1]
-        close_diff = np.diff(np.array(close_positions), axis=0) / self.ts
-        self.close_vel = np.mean(close_diff, axis=0)
+        close_diff = np.diff(np.array(close_positions), axis=0)[:] / self.ts
+        print(close_diff.shape)
+        print('close_diff', close_diff)
+        # self.close_vel = np.mean(close_diff, axis=0)
+        self.close_vel = (close_positions[-1] - close_positions[0]) / (len(close_positions) * self.ts)
+        # self.close_vel = st.mode(close_diff)[0]
+        print('close_vel', self.close_vel)
 
         # save the last positions and average velocities of the far position
         self.far_pos = far_positions[-1]
-        far_diff = np.diff(np.array(far_positions), axis=0) / self.ts
-        self.far_vel = np.mean(far_diff, axis=0)
+        far_diff = np.diff(np.array(far_positions), axis=0)[:] / self.ts
+        print('far_diff', far_diff)
+        # self.far_vel = np.mean(far_diff, axis=0)
+        self.far_vel = (far_positions[-1] - far_positions[0]) / (len(far_positions) * self.ts)
+        # self.far_vel = st.mode(far_diff)[0]
+        print('far_vel', self.far_vel)
 
 
     def get_wedge_vertices(self, t):
