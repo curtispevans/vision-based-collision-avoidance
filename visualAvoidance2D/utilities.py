@@ -12,15 +12,33 @@ uav_wingspan = 24
 uav_size = uav_scale * uav_wingspan
 
 # parameters for the wedge estimator
-bearing_uncertainty = 0.03 # calculated from the camera
-# bearing_uncertainty = 0.05
+# bearing_uncertainty = 0.03 # calculated from the camera
+bearing_uncertainty = 0.05
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 8
+min_area = 20
 # This is the largest pixel area that an intruder could possibly be
-max_area = 11
+max_area = 60
 
 ############################################################################################################
+
+class DirtyDerivative:
+    def __init__(self, Ts, tau):
+        self.Ts = Ts
+        self.tau = tau
+        self.a1 = (2.0 * tau - Ts) / (2.0 * tau + Ts)
+        self.a2 = (2.0)/ (2.0 * tau + Ts)
+        self.initialized = False
+
+    def update(self, z):
+        if self.initialized is False:
+            self.z_dot = 0 * z
+            self.z_delay_1 = z
+            self.initialized = True
+        else:
+            self.z_dot = self.a1 * self.z_dot + self.a2 * (z - self.z_delay_1)
+            self.z_delay_1 = z
+        return self.z_dot
 
 
 class MedianFilter:
@@ -192,6 +210,11 @@ class GMM:
 class WedgeEstimator:
     def __init__(self, n=20) -> None:
         self.ts = ts_simulation
+        tau = 5*self.ts
+        # these are the derivatives of the size, bearing and heading that will be updated
+        self.size_derivative = DirtyDerivative(Ts=self.ts, tau=tau)
+        self.bearing_derivative = DirtyDerivative(Ts=self.ts, tau=tau)
+        self.heading_derivative = DirtyDerivative(Ts=self.ts, tau=tau)
 
         # this is the smallest and largest area that the intruder can be in
         self.smallest_intruder_area = min_area
@@ -201,7 +224,50 @@ class WedgeEstimator:
 
         self.n = n
         self.cov = np.array([[6,0],[0,1]])
+    
+    def update_derivatives(self, ownship_theta, bearing_angle, size):
+        self.bearing_derivative.update(z=bearing_angle)
+        self.size_derivative.update(z=size)
+        self.heading_derivative.update(z=ownship_theta)
+
+    def set_velocity_positions_dirty_derivative(self, bearing_angles, sizes, thetas, ownship_positions):
+        for bearing, size, theta in zip(bearing_angles[:-1], sizes[:-1], thetas[:-1]):
+            self.update_derivatives(ownship_theta=theta, bearing_angle=bearing, size=size)
         
+        size = sizes[-1]
+        bearing = bearing_angles[-1]
+        theta = thetas[-1]
+
+        size_dot = self.size_derivative.update(z=size)
+        bearing_dot = self.bearing_derivative.update(z=bearing)
+        heading_dot = self.heading_derivative.update(z=theta)
+
+        ownship_pos = ownship_positions[-1]
+
+        intruder_min_range = self.smallest_intruder_area / size
+        intruder_max_range = self.largest_intruder_area / size
+
+        los_body = np.array([[np.cos(bearing)], [np.sin(bearing)]])
+        los_dot_body = np.array([[bearing_dot * np.sin(bearing)], [bearing_dot * np.cos(bearing)]])
+
+        R = rotation_matrix(theta)
+        los_interial = R @ los_body
+        los_dot_interial = R @ los_dot_body + R @ np.array([[0, -1], [1, 0]]) @ los_body * heading_dot
+
+        ownship_vel = np.diff(np.array(ownship_positions), axis=0)[-1] / self.ts
+        velocity_evolution = los_dot_body - (size_dot / size) * los_body
+
+
+
+        self.close_pos = ownship_pos + los_body * intruder_min_range
+        self.close_vel = ownship_vel + velocity_evolution * intruder_min_range
+        self.far_pos = ownship_pos + los_body * intruder_max_range
+        self.far_vel = ownship_vel + velocity_evolution * intruder_max_range
+
+        self.init_own_pos = ownship_pos
+        self.init_own_vel = ownship_vel
+
+
 
 
     def set_velocity_position(self, bearing_angles, sizes, thetas, ownship_positions):
@@ -216,6 +282,7 @@ class WedgeEstimator:
         # make empty lists for the positions
         close_positions = []
         far_positions = []
+        intruder_positions = []
 
         # if len(bearing_angles) > 10:
         #     bearing_angles = bearing_angles[-10:]
@@ -236,24 +303,39 @@ class WedgeEstimator:
             # get the positions of the intruder
             close_pos = ownship_pos + los_body * intruder_min_range
             far_pos = ownship_pos + los_body * intruder_max_range
+            intruder_pos = ownship_pos + los_body * (intruder_min_range + intruder_max_range) / 2
             # append the positions to the lists
             close_positions.append(close_pos)
             far_positions.append(far_pos)
+            intruder_positions.append(intruder_pos)
         
-        # print('close_positions', close_positions)
+        print('close_positions', close_positions)
         # save the ownship last position and velocity
         self.init_own_pos = ownship_positions[-1]
         # heading = np.array([[np.cos(ownship_state.theta)], [np.sin(ownship_state.theta)]])
         # self.init_own_vel = heading * ownship_state.vel
         self.init_own_vel = np.diff(np.array(ownship_positions), axis=0)[-1] / self.ts
 
+        intruder_diff = np.diff(np.array(intruder_positions), axis=0)[:] / self.ts
+        # print('intruder_diff', intruder_diff)
+        intruder_vel = np.mean(intruder_diff, axis=0)
+        # print('intruder_vel', intruder_vel)
+        # print('intruder_min_range', intruder_min_range)
+        # print('intruder_max_range', intruder_max_range)
+
         # save the last positions and average velocities of the close position
         self.close_pos = close_positions[-1]
         close_diff = np.diff(np.array(close_positions), axis=0)[:] / self.ts
-        print(close_diff.shape)
         print('close_diff', close_diff)
+        # self.close_vel = intruder_vel
         # self.close_vel = np.mean(close_diff, axis=0)
-        self.close_vel = (close_positions[-1] - close_positions[0]) / (len(close_positions) * self.ts)
+        close_mean = np.mean(close_diff, axis=0)
+        print('close_mean', close_mean)
+        mask = np.linalg.norm(close_diff - close_mean, axis=1) < 150
+        print('mask', mask)
+        self.close_vel = np.mean(close_diff[mask.flatten()], axis=0)
+        # self.close_vel = close_diff[-1]
+        # self.close_vel = (close_positions[-1] - close_positions[0]) / (len(close_positions) * self.ts)
         # self.close_vel = st.mode(close_diff)[0]
         print('close_vel', self.close_vel)
 
@@ -261,8 +343,13 @@ class WedgeEstimator:
         self.far_pos = far_positions[-1]
         far_diff = np.diff(np.array(far_positions), axis=0)[:] / self.ts
         print('far_diff', far_diff)
+        # self.far_vel = intruder_vel
         # self.far_vel = np.mean(far_diff, axis=0)
-        self.far_vel = (far_positions[-1] - far_positions[0]) / (len(far_positions) * self.ts)
+        # far_mean = np.mean(far_diff, axis=0)
+        # mask = np.linalg.norm(far_diff - far_mean, axis=1) < 400
+        self.far_vel = np.mean(far_diff[mask.flatten()], axis=0)
+        # self.far_vel = far_diff[-1]
+        # self.far_vel = (far_positions[-1] - far_positions[0]) / (len(far_positions) * self.ts)
         # self.far_vel = st.mode(far_diff)[0]
         print('far_vel', self.far_vel)
 

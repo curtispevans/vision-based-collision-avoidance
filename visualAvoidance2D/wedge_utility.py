@@ -50,8 +50,10 @@ def create_wedges(filepath_bearing, filepath_true, num_measurements, window_size
     
 
 def test():
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0003/20241205_152441_bearing_info.npy'
-    filepath_true = 'visualAvoidance2D/data/xplane_data/0003/20241205_152441_all_positions_in_path.npy'
+    # filepath_bearing = 'visualAvoidance2D/data/xplane_data/0003/20241205_152441_bearing_info.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0001/bearing_info.npy'
+    # filepath_true = 'visualAvoidance2D/data/xplane_data/0003/20241205_152441_all_positions_in_path.npy'
+    filepath_true = 'visualAvoidance2D/data/xplane_data/0001/all_positions_in_path.npy'
     real = np.load(filepath_true)[:,:,:]
     # print(ownship_real)
     num_measurements = 30
@@ -70,7 +72,10 @@ def test():
             # plt.waitforbuttonpress()
         t += ts
         plt.plot(real[0][num,0], real[0][num,1], 'bo')
-        plt.pause(0.01)
+        plt.xlim(-4000, 1000)
+        plt.ylim(-10, 5000)
+        # plt.pause(0.01)
+        plt.waitforbuttonpress()
         num += 1
 
     plt.show()

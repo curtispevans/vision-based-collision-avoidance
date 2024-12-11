@@ -1,11 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.load('visualAvoidance2D/data/xplane_data/0003/20241205_152441_bearing_info.npy')
-# data = np.load('visualAvoidance2D/data/xplane_data/0001/bearing_info.npy')
-all_positions = np.load('visualAvoidance2D/data/xplane_data/0003/20241205_152441_all_positions_in_path.npy')
-print(data[:20])
-# print(np.diff(all_positions[3, :30, :], axis=0) / (1/30))
+# data = np.load('visualAvoidance2D/data/xplane_data/0003/20241205_152441_bearing_info.npy')
+data = np.load('visualAvoidance2D/data/xplane_data/0001/bearing_info.npy')
+# all_positions = np.load('visualAvoidance2D/data/xplane_data/0003/20241205_152441_all_positions_in_path.npy')
+all_positions = np.load('visualAvoidance2D/data/xplane_data/0001/all_positions_in_path.npy')
+
+print(all_positions[1, :30, :])
+print(np.diff(all_positions[1, :30, :], axis=0) / (1/30))
 colors = ['ro', 'go', 'yo']
 for i, position in enumerate(all_positions[1:]):
     print(i)
@@ -24,6 +26,9 @@ for i in range(data.shape[0]):
         sizes[j].append(data[i][j,1])
 
 plt.plot(sizes[0][:30], 'o')
+plt.show()
+
+plt.plot(bearings[0][:30], 'o')
 plt.show()
 
 plt.plot(sizes[1][:30], 'o')
