@@ -8,7 +8,7 @@ intruders = []
 for intruder in real[1:]:
     intruders.append(intruder)
 
-intruder_wingspan = 40
+intruder_wingspan = 30
 
 ownship = real[0]
 # ownship = ownship[0] * np.ones_like(ownship)
@@ -52,6 +52,9 @@ while num < len(real[0]):
         plt.plot(intruder[num,0], intruder[num,1], 'ro')
         mid_top = (vertices[0] + vertices[3]) / 2
         mid_bottom = (vertices[1] + vertices[2]) / 2
+        ownship_reverse = np.array([ownship[num-1][1], ownship[num-1][0]]).reshape(-1,1)
+        # mid_top += ownship_reverse
+        # mid_bottom += ownship_reverse
         plt.plot([mid_top[1], mid_bottom[1]], [mid_top[0], mid_bottom[0]], 'go')
     t += ts
     plt.xlim(-4000, 1100)
@@ -60,3 +63,7 @@ while num < len(real[0]):
     num += 1
 
 plt.show()
+
+print('\nmid_bottom', mid_bottom.flatten())
+print('true', intruders[0][-1])
+print('ownship', ownship[-1])
