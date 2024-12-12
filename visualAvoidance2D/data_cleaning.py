@@ -25,10 +25,10 @@ for i in range(data.shape[0]):
         bearings[j].append(data[i][j,0])
         sizes[j].append(data[i][j,1])
 
-plt.plot(sizes[0][:30], 'o')
+plt.plot(sizes[0][:], 'o')
 plt.show()
 
-plt.plot(bearings[0][:30], 'o')
+plt.plot(bearings[0][:], 'o')
 plt.show()
 
 plt.plot(sizes[1][:30], 'o')

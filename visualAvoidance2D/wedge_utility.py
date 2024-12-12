@@ -25,8 +25,8 @@ def create_wedges(filepath_bearing, filepath_true, num_measurements, window_size
     for i in range(0, num_measurements):
         for j in range(num_intruders):
             bearings_list[j].append(data[i][j,0])
-            # sizes_list[j].append(median_filters[j].predict(data[i+shift_index][j,1]))
-            sizes_list[j].append(data[i][j,1])
+            sizes_list[j].append(median_filters[j].predict(data[i+shift_index][j,1]))
+            # sizes_list[j].append(data[i][j,1])
     
     ownship_positions = []
     ownship_thetas = []
@@ -55,20 +55,27 @@ def test():
     # filepath_true = 'visualAvoidance2D/data/xplane_data/0003/20241205_152441_all_positions_in_path.npy'
     filepath_true = 'visualAvoidance2D/data/xplane_data/0001/all_positions_in_path.npy'
     real = np.load(filepath_true)[:,:,:]
+    measurements = np.load(filepath_bearing)
+    
     # print(ownship_real)
     num_measurements = 30
-    window_size = 11
+    window_size = 15
     wedges = create_wedges(filepath_bearing, filepath_true, num_measurements, window_size)
     ts = 1/30
-    t = (num_measurements) * ts
-    num = num_measurements
-    
+    t = 0
+    num = num_measurements+1
     while num < len(real[0]):
-        plt.clf()
+        # plt.clf()
         for i, wedge in enumerate(wedges):
+            bearing = measurements[num, i, 0]
+            size = measurements[num, i, 1]
+            ownship_pos = real[0,num,:].reshape(-1,1)
+            # vertices = wedge.get_wedge_and_update(t, bearing, size, 0.0, ownship_pos)
             vertices = wedge.get_wedge_vertices(t)
             plt.plot(real[i+1][num,0], real[i+1][num,1], 'ro')
-            plot_wedge(vertices)
+            mid_top = (vertices[0] + vertices[3]) / 2
+            mid_bottom = (vertices[1] + vertices[2]) / 2
+            plt.plot([mid_top[1], mid_bottom[1]], [mid_top[0], mid_bottom[0]], 'go')
             # plt.waitforbuttonpress()
         t += ts
         plt.plot(real[0][num,0], real[0][num,1], 'bo')
