@@ -47,7 +47,7 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
         plt.plot(ownship[:,0], ownship[:,1], 'bo', label='Ownship')
         plt.show()
 
-        plot_bearings_sizes_rhos(bearings, sizes, rhos)
+        # plot_bearings_sizes_rhos(bearings, sizes, rhos)
 
         while num < len(ownship):
             plt.clf()
@@ -65,8 +65,8 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
                         [vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 'r', linewidth=1)
                 plt.plot([pose[0,0], mid_top[1,0]], [pose[1,0], mid_top[0,0]], 'k', linewidth=1)
             t += ts
-            plt.xlim(-300, 700)
-            plt.ylim(-10, 990)
+            plt.xlim(-300, 1000)
+            plt.ylim(-100, 1300)
             num += 1
             if button_press:
                 plt.waitforbuttonpress()
@@ -75,7 +75,7 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
 
         plt.show()
 
-    print(vertices)
+    # print(vertices)
 
     return wedges
 
@@ -125,4 +125,4 @@ def make_voxel_map_for_a_star(wedges, ownship):
 if __name__ == '__main__':
     filepath = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
     ownship, intruders = get_ownship_intruder_positions(filepath)
-    create_wedges(ownship, [intruders[0]], plot=True, button_press=True)
+    create_wedges(ownship, intruders, plot=True, button_press=False)
