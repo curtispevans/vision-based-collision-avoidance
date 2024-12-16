@@ -346,7 +346,6 @@ class WedgeEstimator:
         self.close_vel = close_mean
         # self.close_vel = close_diff[-1]
         # self.close_vel = (close_positions[-1] - close_positions[0]) / (len(close_positions) * self.ts)
-        # self.close_vel = st.mode(close_diff)[0]
         print('close_vel', self.close_vel)
 
         # save the last positions and average velocities of the far position
