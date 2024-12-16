@@ -48,11 +48,13 @@ wedge = WedgeEstimator()
 num = 10
 wedge.set_velocity_position(bearings[:num], sizes[:num], [0.0]*num, ownship[:num].reshape(num,2,1))
 ts = 1/30
-num += 1
 t = 0
+t += ts
 
 while num < len(real[0]):
     plt.clf()
+    own_pos = ownship[num].reshape(-1,1)
+
     vertices = wedge.get_wedge_vertices(t)
     own_pos = wedge.init_own_pos
     own_vel = wedge.init_own_vel
@@ -62,9 +64,7 @@ while num < len(real[0]):
         plt.plot(intruder[num,0], intruder[num,1], 'ro', linewidth=1)
         mid_top = (vertices[0] + vertices[3]) / 2
         mid_bottom = (vertices[1] + vertices[2]) / 2
-        ownship_reverse = np.array([ownship[num][1], ownship[num][0]]).reshape(-1,1)
-        # mid_top += ownship_reverse
-        # mid_bottom += ownship_reverse
+        
         plt.plot([mid_top[1], mid_bottom[1]], [mid_top[0], mid_bottom[0]], 'go', linewidth=1)
         plt.plot([pose[0,0], mid_top[1,0]], [pose[1,0], mid_top[0,0]], 'k', linewidth=1)
     t += ts
