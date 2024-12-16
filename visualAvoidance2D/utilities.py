@@ -12,11 +12,11 @@ uav_wingspan = 24
 uav_size = uav_scale * uav_wingspan
 
 # parameters for the wedge estimator
-# bearing_uncertainty = 0.03 # calculated from the camera
-bearing_uncertainty = 0.05
+bearing_uncertainty = 0.03 # calculated from the camera
+# bearing_uncertainty = 0.05
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 5
+min_area = 10
 # This is the largest pixel area that an intruder could possibly be
 max_area = 30
 
@@ -325,43 +325,28 @@ class WedgeEstimator:
         
         # save the ownship last position and velocity
         self.init_own_pos = ownship_positions[-1]
-        # heading = np.array([[np.cos(ownship_state.theta)], [np.sin(ownship_state.theta)]])
-        # self.init_own_vel = heading * ownship_state.vel
         # ownship_diff = np.diff(np.array(ownship_positions), axis=0)[:] / self.ts
-        self.init_own_vel = (ownship_positions[-1] - ownship_positions[0]) / ((len(ownship_positions) - 1)*self.ts)
         # self.init_own_vel = np.mean(ownship_diff, axis=0)
+        self.init_own_vel = (ownship_positions[-1] - ownship_positions[0]) / ((len(ownship_positions) - 1)*self.ts)
+        
 
         # save the last positions and average velocities of the close position
         self.close_pos = close_positions[-1]
         close_diff = np.diff(np.array(close_positions), axis=0)[:] / self.ts
-        print('close_diff', close_diff)
-        # self.close_vel = intruder_vel
-        # self.close_vel = np.mean(close_diff, axis=0)
-        close_mean = np.mean(close_diff, axis=0)
-        # print('close_mean', close_mean)
-        # mask = np.linalg.norm(close_diff - close_mean, axis=1) < 250
-        # print('mask', mask)
-        # print('using mask', close_diff[mask.flatten()])
-        # self.close_vel = np.mean(close_diff[mask.flatten()], axis=0)
-        self.close_vel = close_mean
+        # print('close_diff', close_diff)
+        self.close_vel = np.mean(close_diff, axis=0)
         # self.close_vel = close_diff[-1]
         # self.close_vel = (close_positions[-1] - close_positions[0]) / (len(close_positions) * self.ts)
-        print('close_vel', self.close_vel)
+        # print('close_vel', self.close_vel)
 
         # save the last positions and average velocities of the far position
         self.far_pos = far_positions[-1]
         far_diff = np.diff(np.array(far_positions), axis=0)[:] / self.ts
-        print('far_diff', far_diff)
-        # print('far_diff mask' , far_diff[mask.flatten()])
-        # self.far_vel = intruder_vel
+        # print('far_diff', far_diff)
         self.far_vel = np.mean(far_diff, axis=0)
-        # far_mean = np.mean(far_diff, axis=0)
-        # mask = np.linalg.norm(far_diff - far_mean, axis=1) < 400
-        # self.far_vel = np.mean(far_diff[mask.flatten()], axis=0)
         # self.far_vel = far_diff[-1]
         # self.far_vel = (far_positions[-1] - far_positions[0]) / (len(far_positions) * self.ts)
-        # self.far_vel = st.mode(far_diff)[0]
-        print('far_vel', self.far_vel)
+        # print('far_vel', self.far_vel)
 
     
 
@@ -372,7 +357,6 @@ class WedgeEstimator:
         """
         # get the vertices of the wedge
         vertices, intruder_dir, r = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
-        # vertices = get_wedge_vertices_known_ownship(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, ownship_pos, self.bearing_uncertainty)
         ownship_pos = self.init_own_pos + self.init_own_vel * t
         vertices += np.array([[ownship_pos[1], ownship_pos[0]]])
         return vertices
@@ -518,51 +502,6 @@ def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, init_own_pos, 
 
     return np.array([far_right, close_right, close_left, far_left]), intruder_dir, np.linalg.norm(intruder_dir)
 
-def get_wedge_vertices_known_ownship(t, close_pos, close_vel, far_pos, far_vel, own_pos, bearing_uncertainty):
-    """
-    Returns the wedge at the given time.
-    
-    Parameters:
-        t (float) - the time of the wedge
-        close_pos (2,) ndarray - the position of the close intruder
-        close_vel (2,) ndarray - the velocity of the close intruder
-        far_pos (2,) ndarray - the position of the far intruder
-        far_vel (2,) ndarray - the velocity of the far intruder
-        init_own_pos (2,) ndarray - the initial position of the ownship
-        init_own_vel (2,) ndarray - the initial velocity of the ownship
-        bearing_uncertainty (float) - the uncertainty in the bearing angle
-    
-    Returns:
-        (4,2) ndarray - the vertices of the wedge [far_right, close_right, close_left, far_left]
-    """
-
-    # get the future positions of the intruders
-    close_fut_pos = close_pos + t * close_vel
-    far_fut_pos = far_pos + t * far_vel
-
-    # get the future position of the ownship
-    own_fut_pos = own_pos
-
-    # get the direction of the intruder
-    intruder_dir = far_fut_pos - close_fut_pos
-    intruder_dir_unit = intruder_dir / np.linalg.norm(intruder_dir)
-    intruder_dir_perp = np.array([intruder_dir_unit[1], -intruder_dir_unit[0]])
-
-    perp_factor = intruder_dir_perp * np.tan(bearing_uncertainty)
-
-    # find the corners of the close intruder
-    min_wingspan_dist = np.linalg.norm(own_fut_pos - close_fut_pos)
-    close_lateral_dist = min_wingspan_dist * perp_factor
-    close_right = close_fut_pos + close_lateral_dist
-    close_left = close_fut_pos - close_lateral_dist
-
-    # find the corners of the far intruder
-    max_wingspan_dist = np.linalg.norm(own_fut_pos - far_fut_pos)
-    far_lateral_dist = max_wingspan_dist * perp_factor
-    far_right = far_fut_pos + far_lateral_dist
-    far_left = far_fut_pos - far_lateral_dist
-
-    return np.array([far_right, close_right, close_left, far_left])
 
 
 def faster_equally_spaced_points(v1, v2, v3, v4, n):

@@ -59,11 +59,12 @@ def test():
     
     # print(ownship_real)
     num_measurements = 30
-    window_size = 15
+    window_size = 5
     wedges = create_wedges(filepath_bearing, filepath_true, num_measurements, window_size)
     ts = 1/30
     t = 0
-    num = num_measurements+1
+    num = num_measurements
+    t += ts
     while num < len(real[0]):
         # plt.clf()
         for i, wedge in enumerate(wedges):
