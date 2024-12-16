@@ -14,7 +14,17 @@ def get_ownship_intruder_positions(filepath):
         intruders.append(intruder)
     return ownship, intruders
 
-def create_wedges(ownship, intruders, plot=False, button_press=False):
+def get_bearing_size_measurements(filepath):
+    data = np.load(filepath)
+    bearings = [[] for _ in range(data.shape[1])]
+    sizes = [[] for _ in range(data.shape[1])]
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            bearings[j].append(data[i][j,0])
+            sizes[j].append(data[i][j,1])
+    return bearings, sizes
+
+def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=False, button_press=False):
     num_intruders = len(intruders)
     bearings = []
     sizes = []
@@ -23,8 +33,7 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
         bearings.append([])
         sizes.append([])
         rhos.append([])
-        for intruder_pos, ownship_pos in zip(intruders[i], ownship):
-            bearing = np.arctan2(intruder_pos[0] - ownship_pos[0], intruder_pos[1] - ownship_pos[1])
+        for intruder_pos, ownship_pos, bearing, size in zip(intruders[i], ownship, bearing_measurements[i], pixel_size[i]):
             rho = np.linalg.norm(intruder_pos - ownship_pos)
             size = intruder_wingspan / rho
             bearings[i].append(bearing)
@@ -32,7 +41,7 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
             rhos[i].append(rho)
 
     wedges = []
-    num = 10
+    num = 30
     for i in range(num_intruders):
         wedge = WedgeEstimator()
         wedge.set_velocity_position(bearings[i][:num], sizes[i][:num], [0.0]*num, ownship[:num].reshape(num,2,1))
@@ -42,12 +51,20 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
     t += ts
 
     if plot:
-        for i, intruder in enumerate(intruders):
-            plt.plot(intruder[:,0], intruder[:,1], 'ro', label=f"Intruder {i+1}")
-        plt.plot(ownship[:,0], ownship[:,1], 'bo', label='Ownship')
+        colors = ['ro', 'go', 'yo']
+        for j in range(len(ownship)):
+            # plt.clf()
+            for i, intruder in enumerate(intruders):
+                plt.plot(intruder[j,0], intruder[j,1], colors[i], label=f"Intruder {i+1}")
+            plt.plot(ownship[j,0], ownship[j,1], 'ko', label='Ownship')
+            plt.xlim(-300, 1000)
+            plt.ylim(-100, 1300)
+            plt.waitforbuttonpress()
+
+        plt.legend()            
         plt.show()
 
-        # plot_bearings_sizes_rhos(bearings, sizes, rhos)
+        plot_bearings_sizes_rhos(bearings, sizes, rhos)
 
         while num < len(ownship):
             plt.clf()
@@ -58,7 +75,7 @@ def create_wedges(ownship, intruders, plot=False, button_press=False):
             plt.plot(ownship[num,0], ownship[num,1], 'bo', linewidth=1)
             for i, intruder in enumerate(intruders):
                 vertices = wedges[i].get_wedge_vertices(t)
-                plt.plot(intruder[num,0], intruder[num,1], 'ro', linewidth=1)
+                plt.plot(intruder[num,0], intruder[num,1], 'go', markersize=2)
                 mid_top = (vertices[0] + vertices[3]) / 2
                 mid_bottom = (vertices[1] + vertices[2]) / 2
                 plt.plot([vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]],
@@ -123,6 +140,10 @@ def make_voxel_map_for_a_star(wedges, ownship):
 
 
 if __name__ == '__main__':
-    filepath = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
-    ownship, intruders = get_ownship_intruder_positions(filepath)
-    create_wedges(ownship, intruders, plot=True, button_press=False)
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_bearing_info.npy'
+
+    ownship, intruders = get_ownship_intruder_positions(filepath_real)
+    bearings, sizes = get_bearing_size_measurements(filepath_bearing)
+
+    create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)

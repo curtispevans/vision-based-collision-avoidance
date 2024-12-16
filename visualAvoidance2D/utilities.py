@@ -12,8 +12,8 @@ uav_wingspan = 24
 uav_size = uav_scale * uav_wingspan
 
 # parameters for the wedge estimator
-bearing_uncertainty = 0.03 # calculated from the camera
-# bearing_uncertainty = 0.05
+# bearing_uncertainty = 0.03 # calculated from the camera
+bearing_uncertainty = 0.1
 
 # This is the smallest pixel area that an intruder could possibly be
 min_area = 15
@@ -489,13 +489,15 @@ def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, init_own_pos, 
     perp_factor = intruder_dir_perp * np.tan(bearing_uncertainty)
 
     # find the corners of the close intruder
-    min_wingspan_dist = np.linalg.norm(own_fut_pos - close_fut_pos)
+    # min_wingspan_dist = np.linalg.norm(own_fut_pos - close_fut_pos)
+    min_wingspan_dist = np.linalg.norm(close_fut_pos)
     close_lateral_dist = min_wingspan_dist * perp_factor
     close_right = close_fut_pos + close_lateral_dist
     close_left = close_fut_pos - close_lateral_dist
 
     # find the corners of the far intruder
-    max_wingspan_dist = np.linalg.norm(own_fut_pos - far_fut_pos)
+    # max_wingspan_dist = np.linalg.norm(own_fut_pos - far_fut_pos)
+    max_wingspan_dist = np.linalg.norm(far_fut_pos)
     far_lateral_dist = max_wingspan_dist * perp_factor
     far_right = far_fut_pos + far_lateral_dist
     far_left = far_fut_pos - far_lateral_dist
