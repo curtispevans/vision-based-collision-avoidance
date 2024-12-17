@@ -48,7 +48,6 @@ mf2.fit(list(intruder2[:window_size-1,1]))
 mf3.fit(list(intruder3[:window_size-1,1]))
 
 shift_index = int(np.median(np.arange(window_size))) + 1
-print(shift_index)
 
 # get bearing lists
 bearings_list = [intruder1[shift_index:num_measurements,0], intruder2[shift_index:num_measurements,0], intruder3[shift_index:num_measurements,0]]
@@ -80,7 +79,6 @@ for i in range(shift_index, num_measurements):
     sim_time += utils.ts_simulation
 
 # now initialize the wedges
-print(ownship_positions)
 wedges = []
 num_intruders = 3
 for i in range(num_intruders):
@@ -167,7 +165,7 @@ new_shape = (25, 25, 25)
 
 print("Downsampled shape:", data.shape)
 
-start = (0, 0, 13)
+start = (0, 0, 10)
 goal = (new_shape[0]-1, new_shape[1]-1, 13)
 print("start point:",start, "goal point:", goal)
 
@@ -178,7 +176,7 @@ print(binary_matrix.shape)
 # print(data)
 
 
-path = bidirectional_a_star(data, start, goal)
+path = bidirectional_a_star(binary_matrix, start, goal)
 
 print("path:", path)
 print("path length:", len(path))
@@ -255,13 +253,6 @@ for i, vertices in enumerate(list_of_vertices):
         ax.plot([vertice[1][1], vertice[2][1]], [vertice[1][0], vertice[2][0]], i, color='red')
         ax.plot([vertice[2][1], vertice[3][1]], [vertice[2][0], vertice[3][0]], i, color='red')
         ax.plot([vertice[3][1], vertice[0][1]], [vertice[3][0], vertice[0][0]], i, color='red')
-
-
-x, y = np.linspace(-5000, 5000, 25), np.linspace(-1000, 9000, 25)
-
-X, Y = np.meshgrid(x, y)
-
-
 
 # for i in range(0, data.shape[0]):
    
