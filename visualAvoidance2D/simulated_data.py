@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import time
 from scipy.optimize import NonlinearConstraint, minimize
+from scipy.stats import circmean
 
 from utilities import WedgeEstimator, are_inside_wedge
 from pathplannerutility import bidirectional_a_star, binarize_matrix, con_cltr_pnt, object_function_new
@@ -36,17 +37,25 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
     bearings = []
     sizes = []
     rhos = []
+    bearing_diff = []
     for i in range(num_intruders):
         bearings.append([])
         sizes.append([])
         rhos.append([])
+        bearing_diff.append([])
         for intruder_pos, ownship_pos, bearing, size in zip(intruders[i], ownship, bearing_measurements[i], pixel_size[i]):
+            true_bearing = np.arctan2(intruder_pos[0] - ownship_pos[0], intruder_pos[1] - ownship_pos[1])
             rho = np.linalg.norm(intruder_pos - ownship_pos)
             size = intruder_wingspan / rho
             bearings[i].append(bearing)
             sizes[i].append(size)
             rhos[i].append(rho)
+            # circular difference
+            diff = np.abs(bearing - true_bearing) % (2*np.pi)
+            angular_diff = np.minimum(diff, 2*np.pi - diff)
+            bearing_diff[i].append(angular_diff)
 
+    print("Bearing difference mean: ", circmean(bearing_diff, axis=1))
     wedges = []
     num = 30
     for i in range(num_intruders):
@@ -75,7 +84,8 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
             if button_press:
                 plt.waitforbuttonpress()
             else:
-                plt.pause(0.01)
+                pass
+                # plt.pause(0.01)
 
         plt.legend()            
         plt.show()
@@ -104,7 +114,8 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
             if button_press:
                 plt.waitforbuttonpress()
             else:
-                plt.pause(0.01)
+                pass
+                # plt.pause(0.01)
 
         plt.show()
 
@@ -128,7 +139,7 @@ def plot_bearings_sizes_rhos(bearings, sizes, rhos):
         plt.tight_layout()
         plt.show()
 
-def make_voxel_map_for_a_star(wedges, ownship):
+def make_voxel_map_for_a_star(wedges, ownship, intruders):
     start = ownship[11]
     x, y = np.linspace(start[0] - 1000, start[0] + 1000, 25), np.linspace(start[1], start[1] + 2000, 25)
     X, Y = np.meshgrid(x, y)
@@ -144,21 +155,31 @@ def make_voxel_map_for_a_star(wedges, ownship):
         Z = np.zeros((25, 25))
         vertices = []
         points = np.vstack((Y.ravel(), X.ravel())).T
+        idx_sec = 30 + i*30
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             vertices.append(vertice)
             Z += are_inside_wedge(points, vertice).reshape(25, 25)
-            plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
-                        [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=i/25)
-        own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
-        plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=i/25)
+    
+            if idx_sec < len(intruders[j]):
+                plt.plot(intruders[j][idx_sec,0], intruders[j][idx_sec,1], colors[j][0]+'o', markersize=2, alpha=idx_sec/len(ownship))
+                plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
+                            [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=idx_sec/len(ownship))
+        
         list_of_vertices.append(vertices)
         in_out_wedge_list.append(Z)
         sim_time += 30*ts
-        plt.xlim(start[0]-1000, start[0] + 1000)
-        plt.ylim(start[1], start[1] + 2000)
-        plt.pause(0.01)
+        if idx_sec < len(ownship):
+            own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
+            plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=idx_sec/len(ownship))
+            plt.xlim(start[0]-2500, start[0] + 2500)
+            plt.ylim(start[1], start[1] + 5000)
+            plt.xlabel('E')
+            plt.ylabel('N')
+            plt.pause(0.01)
+    plt.savefig('visualAvoidance2D/figures/alpha_wedge.png', dpi=300)
     plt.show()
+    
 
     return in_out_wedge_list, list_of_vertices
 
@@ -179,7 +200,7 @@ def initialize_x0(path, start, end, dim, ownship_start):
     
 def optimize_path(x0, start_point, end_point, array_of_vertices):
     nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 200.0)
-    dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -300*num_intruders)
+    dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -500*num_intruders)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
     return res
@@ -205,10 +226,17 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     ax.set_zlim(0, 25)
     ax.set_xlim([ownship_start[0] - 1000, ownship_start[0] + 1000])
     ax.set_ylim([ownship_start[1], ownship_start[1] + 2000])
-    ax.set_xlabel('X axis')
-    ax.set_ylabel('Y axis')
-    ax.set_zlabel('Time axis')
-    ax.legend()
+    ax.set_xlabel('E')
+    ax.set_ylabel('N')
+    # ax.set_zlabel('Time in Seconds')
+    ax.legend(loc='lower right')
+
+    ax.view_init(elev=90, azim=-90)
+    ax.set_zticks([])
+    ax.set_zlabel('')
+    
+    plt.tight_layout()
+    plt.savefig('visualAvoidance2D/figures/optimal_control_points.png', dpi=300)
     plt.show()
 
 def animate_path(ownship_start, curve, list_of_vertices):
@@ -236,15 +264,15 @@ def animate_path(ownship_start, curve, list_of_vertices):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0002/20241205_151830_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0001/all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0001/bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
     num_intruders = len(intruders)
 
     wedges = create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)
-    in_out_wedge_list, list_of_vertices = make_voxel_map_for_a_star(wedges, ownship)
+    in_out_wedge_list, list_of_vertices = make_voxel_map_for_a_star(wedges, ownship, intruders)
     data = np.array(in_out_wedge_list)
     binary_matrix = binarize_matrix(data, 0)
     start = (0,0,13)

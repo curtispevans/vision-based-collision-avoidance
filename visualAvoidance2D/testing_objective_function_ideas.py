@@ -94,16 +94,20 @@ def test_distance_function():
     print(np.min(Z))
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    # ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
-    #         [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 'hotpink', linewidth=2)
+    
     # ax.plot([vertices2[0,0], vertices2[1,0], vertices2[2,0], vertices2[3,0], vertices2[0,0]],
     #         [vertices2[0,1], vertices2[1,1], vertices2[2,1], vertices2[3,1], vertices2[0,1]], 'hotpink', linewidth=2)
-    ax.plot_surface(X, Y, Z, cmap='viridis')
+    ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8, )
+    ax.plot([vertices[0,0], vertices[1,0], vertices[2,0], vertices[3,0], vertices[0,0]], 
+            [vertices[0,1], vertices[1,1], vertices[2,1], vertices[3,1], vertices[0,1]], 0, 'firebrick', linewidth=2)
+    ax.view_init(elev=90, azim=0)
+    ax.set_zticks([])
+    
     # ax.set_zlim([-1, 10])
     ax.set_xlabel('E')
     ax.set_ylabel('N')
     ax.set_zlabel('Distance')
-    ax.set_title('Distance function')
+    # ax.set_title('Distance function')
     plt.savefig('visualAvoidance2D/figures/distance_function.png', dpi=300)
     plt.show()
 
