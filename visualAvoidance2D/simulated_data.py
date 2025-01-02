@@ -47,7 +47,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
             true_bearing = np.arctan2(intruder_pos[0] - ownship_pos[0], intruder_pos[1] - ownship_pos[1])
             rho = np.linalg.norm(intruder_pos - ownship_pos)
             size = intruder_wingspan / rho
-            bearings[i].append(bearing)
+            bearings[i].append(true_bearing)
             sizes[i].append(size)
             rhos[i].append(rho)
             # circular difference
@@ -172,8 +172,8 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
         if idx_sec < len(ownship):
             own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
             plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=idx_sec/len(ownship))
-            plt.xlim(start[0]-2500, start[0] + 2500)
-            plt.ylim(start[1], start[1] + 5000)
+            plt.xlim(start[0]-1000, start[0] + 1000)
+            plt.ylim(start[1], start[1] + 2000)
             plt.xlabel('E')
             plt.ylabel('N')
             plt.pause(0.01)
@@ -199,7 +199,7 @@ def initialize_x0(path, start, end, dim, ownship_start):
     return x0, start_point, end_point
     
 def optimize_path(x0, start_point, end_point, array_of_vertices):
-    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 200.0)
+    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 80.0)
     dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -500*num_intruders)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
@@ -240,7 +240,19 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     plt.show()
 
 def animate_path(ownship_start, curve, list_of_vertices):
-    fig, ax = plt.subplots()
+    plt.plot(curve[:,1], curve[:,0], 'g-')
+    plt.plot(curve[0,1], curve[0,0], 'ro')
+    colors = ['r-', 'g-', 'y-']
+    for j, vertice in enumerate(list_of_vertices[0]):
+        plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
+                    [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
+    
+    plt.xlim([ownship_start[0] - 1000, ownship_start[0] + 1000])
+    plt.ylim([ownship_start[1]-100, ownship_start[1] + 2000])
+
+    plt.savefig('visualAvoidance2D/figures/first_frame.png', dpi=300)
+    
+    fig, ax = plt.subplots(dpi=300)
     
     def update(frame):
         ax.cla()
@@ -259,6 +271,7 @@ def animate_path(ownship_start, curve, list_of_vertices):
     
     ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)), repeat=False)
 
+    ani.save('visualAvoidance2D/figures/animated_path.mp4')
     plt.show()
     
 
