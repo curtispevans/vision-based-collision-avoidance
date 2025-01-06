@@ -47,7 +47,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
             true_bearing = np.arctan2(intruder_pos[0] - ownship_pos[0], intruder_pos[1] - ownship_pos[1])
             rho = np.linalg.norm(intruder_pos - ownship_pos)
             size = intruder_wingspan / rho
-            bearings[i].append(true_bearing)
+            bearings[i].append(bearing)
             sizes[i].append(size)
             rhos[i].append(rho)
             # circular difference
@@ -257,11 +257,16 @@ def animate_path(ownship_start, curve, list_of_vertices):
     def update(frame):
         ax.cla()
 
-        time_with_frame = frame*4
+        if frame == len(list_of_vertices):
+            time_with_frame = -1
+        else:
+            time_with_frame = frame*4
         # print(time_with_frame, frame)
         ax.plot(curve[:,1], curve[:,0], 'g-')
         ax.plot(curve[time_with_frame,1], curve[time_with_frame,0], 'ro')
         colors = ['r-', 'g-', 'y-']
+        if frame == len(list_of_vertices):
+            frame -= 1
         for j, vertice in enumerate(list_of_vertices[frame]):
             ax.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
@@ -269,7 +274,7 @@ def animate_path(ownship_start, curve, list_of_vertices):
         ax.set_xlim([ownship_start[0] - 1000, ownship_start[0] + 1000])
         ax.set_ylim([ownship_start[1], ownship_start[1] + 2000])
     
-    ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)), repeat=False)
+    ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)+1), repeat=False)
 
     ani.save('visualAvoidance2D/figures/animated_path.mp4')
     plt.show()
@@ -277,8 +282,8 @@ def animate_path(ownship_start, curve, list_of_vertices):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0001/all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0001/bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
