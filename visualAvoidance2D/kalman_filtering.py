@@ -3,6 +3,8 @@ from jax import jacfwd, jacrev, jacobian
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
+intruder_wingspan = 10
+
 def motion_model(x, delta_t):
     '''
     x: state vector
@@ -43,6 +45,46 @@ def kalman_update(mu, sigma, measurement, R, Q, delta_t):
 
     return mu, sigma 
     
+def get_ownship_and_intruders_from_filepath(filepath):
+    real = np.load(filepath)
+    ownship = real[0]
+    intruders = []
+    for intruder in real[1:]:
+        intruders.append(intruder)
+
+    start = ownship[0]
+    middle = start - np.array([100., 0.])
+    maneuver = [start]
+    
+    for i in range(0, 299, 1):
+        theta = np.pi * i/180
+        point = middle + 100*np.array([np.cos(theta), np.sin(theta)])
+        maneuver.append(point)
+
+    maneuver = np.array(maneuver)
+    print(len(maneuver), len(ownship))
+    plt.plot(ownship[:,0], ownship[:,1], 'o')
+    plt.plot(maneuver[:,0], maneuver[:,1], 'o')
+    plt.axis('equal')
+    plt.show()
+    return ownship, maneuver, intruders
+
+def calculate_bearing_pixel_size(ownship, intruders):
+    bearings = []
+    pixel_sizes = []
+    num_intruders = len(intruders)
+    for i in range(num_intruders):
+        bearings.append([])
+        pixel_sizes.append([])
+        for own_pos, intruder_pos in zip(ownship, intruders[i]):
+            true_bearing = np.arctan2(intruder_pos[0] - own_pos[0], intruder_pos[1] - own_pos[1])
+            rho = np.linalg.norm(intruder_pos - own_pos)
+            size = intruder_wingspan / rho
+            bearings[i].append(true_bearing)
+            pixel_sizes[i].append(size)
+
+    return bearings, pixel_sizes
+
 
 
 def testing_jacobian():
@@ -89,4 +131,24 @@ def testing_kalman_update():
     
         
 
-testing_kalman_update()
+if __name__ == "__main__":
+    filepath = "visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy"
+    ownship, maneuver, intruders = get_ownship_and_intruders_from_filepath(filepath)
+    bearings, pixel_sizes = calculate_bearing_pixel_size(maneuver, intruders)
+    
+    bearing1 = bearings[0]
+    size1 = pixel_sizes[0]
+    mu = jnp.array([jnp.cos(bearing1[0]), jnp.sin(bearing1[0]), size1[0], 10, -30, 75, 2])
+    sigma = jnp.eye(7)*0.1
+
+    R = jnp.eye(7)*0.1
+    Q = jnp.eye(3)*0.1
+    delta_t = 1/30
+
+    for i in range(1, len(bearing1)):
+        bearing = bearing1[i]
+        size = size1[i]
+        measurement = jnp.array([jnp.cos(bearing), jnp.sin(bearing), size])
+        mu, sigma = kalman_update(mu, sigma, measurement, R, Q, delta_t)
+    
+    print(mu[-2:])

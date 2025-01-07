@@ -17,7 +17,6 @@ def get_ownship_intruder_positions(filepath):
     real = np.load(filepath)
     ownship = real[0]
     intruders = []
-    num_intruders = real.shape[0] - 1
     for intruder in real[1:]:
         intruders.append(intruder)
     return ownship, intruders
