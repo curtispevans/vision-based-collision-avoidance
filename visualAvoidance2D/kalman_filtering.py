@@ -141,11 +141,13 @@ if __name__ == "__main__":
     size1 = pixel_sizes[0]
     mu = jnp.array([jnp.cos(bearing1[0]), jnp.sin(bearing1[0]), size1[0], 0, 0, 70, 10])
     # sigma = jnp.eye(7)*0.1
-    v = -5000
-    w = 100
+    plt.plot(bearing1, 'o')
+    plt.show()
+    v = 5
+    w = 1
     sigma = jnp.array([[0.01, 0, 0, 0, 0, v, w],
                        [0, 0.01, 0, 0, 0, w, v],
-                       [0, 0, 1, 0, 0, v, v],
+                       [0, 0, 0.01, 0, 0, v, v],
                        [0, 0, 0, 1, 0, w, 0],
                        [0, 0, 0, 0, 1, 0, w],
                        [v, w, v, w, 0, 1, 0],
