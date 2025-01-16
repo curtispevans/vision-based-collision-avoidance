@@ -61,12 +61,15 @@ def get_ownship_and_intruders_from_filepath(filepath):
         maneuver.append(point)
 
     maneuver = np.array(maneuver)
-    print(len(maneuver), len(ownship))
-    plt.plot(ownship[:,0], ownship[:,1], 'o')
-    plt.plot(maneuver[:,0], maneuver[:,1], 'o')
-    plt.axis('equal')
-    plt.show()
-    return ownship, maneuver, intruders
+    velocity = np.diff(maneuver, axis=0)
+    acceleration = np.diff(velocity, axis=0)
+    # print(acceleration)
+    # print(len(maneuver), len(ownship))
+    # plt.plot(ownship[:,0], ownship[:,1], 'o')
+    # plt.plot(maneuver[:,0], maneuver[:,1], 'o')
+    # plt.axis('equal')
+    # plt.show()
+    return ownship, maneuver, intruders, velocity, acceleration
 
 def calculate_bearing_pixel_size(ownship, intruders):
     bearings = []
@@ -138,55 +141,58 @@ def testing_kalman_update():
     
 def maneuver():
     filepath = "visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy"
-    ownship, maneuver, intruders = get_ownship_and_intruders_from_filepath(filepath)
-    bearings, pixel_sizes = calculate_bearing_pixel_size(ownship, intruders)
-    
-    bearing1 = bearings[0]
-    size1 = pixel_sizes[0]
-    mu = jnp.array([jnp.cos(bearing1[0]), jnp.sin(bearing1[0]), size1[0], 10, 10, 0])
-    sigma = jnp.eye(6)*0.1
-    # plt.plot(bearing1, 'o')
-    # plt.show()
-    # v = 5
-    # w = 1
-    # sigma = jnp.array([[0.01, 0, 0, 0, 0, v, w],
-    #                    [0, 0.01, 0, 0, 0, w, v],
-    #                    [0, 0, 0.01, 0, 0, v, v],
-    #                    [0, 0, 0, 1, 0, w, 0],
-    #                    [0, 0, 0, 0, 1, 0, w],
-    #                    [v, w, v, w, 0, 1, 0],
-    #                    [w, v, v, 0, w, 0, 1]])
+    ownship, maneuver, intruders, velocity, acceleration = get_ownship_and_intruders_from_filepath(filepath)
+    bearings, pixel_sizes = calculate_bearing_pixel_size(maneuver, intruders)
+    for j in range(3):
+        bearing1 = bearings[j]
+        size1 = pixel_sizes[j]
+        mu = jnp.array([jnp.cos(bearing1[0]), jnp.sin(bearing1[0]), size1[0], 10, 10, 0])
+        sigma = jnp.eye(6)
+        plt.plot(maneuver[:,0], maneuver[:,1], 'o')
+        plt.plot(intruders[j][:,0], intruders[j][:,1], 'o')
+        plt.axis('equal')
+        plt.show()
+        true_dist = np.linalg.norm(intruders[j] - maneuver, axis=1)
 
-    R = jnp.eye(6)*0.1
-    Q = jnp.eye(3)*0.1
-    delta_t = 1/30
-    control = jnp.array([0, 0, 0, 0, 0, 0])
-    angles = []
-    sizes = []
-    dist = []
+        R = np.eye(6)*0.1
+        R[2,2] = 10
+        R = jnp.array(R)
+        Q = jnp.eye(3)*0.1
+        delta_t = 1/30
+        # control = jnp.array([0, 0, 0, 0, 0, 0])
+        control = acceleration
+        angles = []
+        sizes = []
+        dist = []
 
-    for i in range(1, len(bearing1)):
-        bearing = bearing1[i]
-        size = size1[i]
-        measurement = jnp.array([jnp.cos(bearing), jnp.sin(bearing), size])
-        mu, sigma = kalman_update(mu, sigma, control, measurement, R, Q, delta_t)
-        dist.append(1/mu[-1])
-        angles.append(np.arctan2(mu[1], mu[0]))
-        sizes.append(mu[2])
-    
-    plt.plot(bearing1, 'o', label='Measured')
-    plt.plot(angles, 'o', label='Estimated')
-    plt.legend()
-    plt.show()
+        for i in range(1, len(bearing1)-2):
+            bearing = bearing1[i]
+            size = size1[i]
+            measurement = jnp.array([jnp.cos(bearing), jnp.sin(bearing), size])
+            mu, sigma = kalman_update(mu, sigma, control[i], measurement, R, Q, delta_t)
+            dist.append(1/mu[-1])
+            angles.append(np.arctan2(mu[1], mu[0]))
+            sizes.append(mu[2])
+        
+        plt.plot(bearing1, 'o', label='Measured')
+        plt.plot(angles, 'o', label='Estimated')
+        plt.legend()
+        plt.title('Bearing')
+        plt.show()
 
-    plt.plot(size1, 'o', label='Measured')
-    plt.plot(sizes, 'o', label='Estimated')
-    plt.legend()
-    plt.show()
+        plt.plot(size1, 'o', label='Measured')
+        plt.plot(sizes, 'o', label='Estimated')
+        plt.legend()
+        plt.title('Size')
+        plt.show()
 
-    plt.plot(dist[10:], 'o')
-    plt.show()
+        dist = np.array(dist)
+        plt.plot(true_dist[:], 'o', label='True')
+        plt.plot(dist[:], 'o', label='Estimated')
+        plt.legend()
+        plt.title('Distance')
+        plt.show()
 
 
 if __name__ == "__main__":
-    maneuver() 
+    maneuver()
