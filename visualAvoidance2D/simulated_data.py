@@ -10,7 +10,7 @@ from pathplannerutility import bidirectional_a_star, binarize_matrix, con_cltr_p
 from objective_function_ideas import distance_constraint
 from plotting_bspline_trajectory import get_bspline_path
 
-intruder_wingspan = 20
+intruder_wingspan = 10
 ts = 1/30
 
 def get_ownship_intruder_positions(filepath):
@@ -45,7 +45,8 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
         for intruder_pos, ownship_pos, bearing, size in zip(intruders[i], ownship, bearing_measurements[i], pixel_size[i]):
             true_bearing = np.arctan2(intruder_pos[0] - ownship_pos[0], intruder_pos[1] - ownship_pos[1])
             rho = np.linalg.norm(intruder_pos - ownship_pos)
-            size = intruder_wingspan / rho
+            # size = intruder_wingspan / rho
+            size = size
             bearings[i].append(bearing)
             sizes[i].append(size)
             rhos[i].append(rho)
@@ -117,9 +118,32 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
                 # plt.pause(0.01)
 
         plt.show()
+    
+    start = ownship[30]
+    sim_time = 0
+    colors = ['r', 'g', 'y']
+    steps = 5
 
+    for i in range(steps):
+        idx_sec = 30 + 30*i
+        for j, wedge in enumerate(wedges):
+            vertice = wedge.get_wedge_vertices(sim_time)
+            if idx_sec < len(intruders[j]):
+                plt.plot(intruders[j][idx_sec,0], intruders[j][idx_sec,1], colors[j][0]+'o', markersize=2, alpha=i/steps)
+            plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
+                        [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=i/steps)
+        
+        sim_time += 30*ts
+        if idx_sec < len(ownship):
+            own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
+            plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=i/steps)
+            plt.xlim(start[0]-1000, start[0] + 1000)
+            plt.ylim(start[1], start[1] + 2000)
+            plt.xlabel('East')
+            plt.ylabel('North')
+            plt.pause(0.01)
     # print(vertices)
-
+    plt.show()
     return wedges
 
 def plot_bearings_sizes_rhos(bearings, sizes, rhos):
@@ -278,12 +302,7 @@ def animate_path(ownship_start, curve, list_of_vertices):
     ani.save('visualAvoidance2D/figures/animated_path.mp4')
     plt.show()
     
-
-
-if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_bearing_info.npy'
-
+def ion_code(filepath_real, filepath_bearing):
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
     num_intruders = len(intruders)
@@ -320,6 +339,18 @@ if __name__ == '__main__':
     plot_solution(x0, res, list_of_vertices, ownship[11])
     animate_path(ownship[11], curve, list_of_vertices)
 
+
+
+if __name__ == '__main__':
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_bearing_info.npy'
+
+    ownship, intruders = get_ownship_intruder_positions(filepath_real)
+    bearings, sizes = get_bearing_size_measurements(filepath_bearing)
+    num_intruders = len(intruders)
+
+    wedges = create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)
+    
 
 
 
