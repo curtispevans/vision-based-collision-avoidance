@@ -171,3 +171,14 @@ def distance_constraint(x, vertice_list):
             distances[i//2] += distance_function(np.array([x[i], x[i+1]]), vertices)
 
     return distances
+
+def probability_constraint(x, wedges):
+    sim_time = 0
+    pdf_values = []
+    for i in range(0, len(x), 2):
+        value = 0
+        for wedge in wedges:
+            value += wedge.get_wedge_gmm(i//2).pdf(np.array([x[i], x[i+1]]))
+        pdf_values.append(value)
+    
+    return pdf_values

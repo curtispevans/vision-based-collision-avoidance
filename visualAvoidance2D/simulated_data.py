@@ -7,7 +7,7 @@ from scipy.stats import circmean
 
 from utilities import WedgeEstimator, are_inside_wedge
 from pathplannerutility import bidirectional_a_star, binarize_matrix, con_cltr_pnt, object_function_new
-from objective_function_ideas import distance_constraint
+from objective_function_ideas import distance_constraint, probability_constraint
 from plotting_bspline_trajectory import get_bspline_path
 
 intruder_wingspan = 10
@@ -122,7 +122,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
     start = ownship[30]
     sim_time = 0
     colors = ['r', 'g', 'y']
-    steps = 5
+    steps = 6
 
     for i in range(steps):
         idx_sec = 30 + 30*i
@@ -142,7 +142,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
             plt.xlabel('East')
             plt.ylabel('North')
             plt.pause(0.01)
-    # print(vertices)
+    plt.savefig('visualAvoidance2D/figures/alpha_wedge.png', dpi=300)
     plt.show()
     return wedges
 
@@ -221,9 +221,16 @@ def initialize_x0(path, start, end, dim, ownship_start):
 
     return x0, start_point, end_point
     
-def optimize_path(x0, start_point, end_point, array_of_vertices):
+def optimize_path(x0, start_point, end_point, array_of_vertices, num_intruders):
     nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 80.0)
     dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -500*num_intruders)
+    bounds = None
+    res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
+    return res
+
+def optimize_path_probability(x0, start_point, end_point, wedges):
+    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 80.0)
+    dnlc = NonlinearConstraint(lambda x: probability_constraint(x, wedges), -np.inf, 0.00001)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
     return res
@@ -332,7 +339,7 @@ def ion_code(filepath_real, filepath_bearing):
     print(start, end)
     print(start_point, end_point)
     start = time.time()
-    res = optimize_path(x0, start_point, end_point, array_of_vertices)
+    res = optimize_path_probability(x0, start_point, end_point, wedges)
     print("Optimization time: ", round(time.time() - start,5), " seconds")
 
     curve = get_bspline_path(res.x.reshape(-1,2), 3)
@@ -342,14 +349,15 @@ def ion_code(filepath_real, filepath_bearing):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
     num_intruders = len(intruders)
 
     wedges = create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)
+    # ion_code(filepath_real, filepath_bearing)
     
 
 

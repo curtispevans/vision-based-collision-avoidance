@@ -208,7 +208,7 @@ class GMM:
 
 
 class WedgeEstimator:
-    def __init__(self, n=20) -> None:
+    def __init__(self, n=10) -> None:
         self.ts = ts_simulation
         tau = self.ts/3
         # these are the derivatives of the size, bearing and heading that will be updated
@@ -428,6 +428,7 @@ class WedgeEstimator:
         # rotate the points back 
         points = (R @ points.T).T
         n_points = len(points)
+        print(n_points)
         
         # get the covariance and weights then generate the GMM
         cov = R @ np.diag([(r/5)**2,(perp_dist/5)**2]) @ R.T
