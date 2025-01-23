@@ -45,8 +45,8 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
         for intruder_pos, ownship_pos, bearing, size in zip(intruders[i], ownship, bearing_measurements[i], pixel_size[i]):
             true_bearing = np.arctan2(intruder_pos[0] - ownship_pos[0], intruder_pos[1] - ownship_pos[1])
             rho = np.linalg.norm(intruder_pos - ownship_pos)
-            # size = intruder_wingspan / rho
-            size = size
+            size = intruder_wingspan / rho
+            # size = size
             bearings[i].append(bearing)
             sizes[i].append(size)
             rhos[i].append(rho)
@@ -163,8 +163,8 @@ def plot_bearings_sizes_rhos(bearings, sizes, rhos):
         plt.show()
 
 def make_voxel_map_for_a_star(wedges, ownship, intruders):
-    start = ownship[11]
-    x, y = np.linspace(start[0] - 1000, start[0] + 1000, 25), np.linspace(start[1], start[1] + 2000, 25)
+    start = ownship[30]
+    x, y = np.linspace(start[0] - 500, start[0] + 500, 25), np.linspace(start[1], start[1] + 1000, 25)
     X, Y = np.meshgrid(x, y)
 
     list_of_vertices = []
@@ -195,8 +195,8 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
         if idx_sec < len(ownship):
             own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
             plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=idx_sec/len(ownship))
-            plt.xlim(start[0]-1000, start[0] + 1000)
-            plt.ylim(start[1], start[1] + 2000)
+            plt.xlim(start[0]-500, start[0] + 500)
+            plt.ylim(start[1], start[1] + 1000)
             plt.xlabel('E')
             plt.ylabel('N')
             plt.pause(0.01)
@@ -207,17 +207,17 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
     return in_out_wedge_list, list_of_vertices
 
 def initialize_x0(path, start, end, dim, ownship_start):
-    scaler_shift = 2000/dim
+    scaler_shift = 1000/dim
     x0 = []
     past = -1
     for i in range(len(path)):
         if path[i][0] != past:
             x0.append(scaler_shift*path[i][1] + ownship_start[1])
-            x0.append(scaler_shift*path[i][2] - 1000 + ownship_start[0])
+            x0.append(scaler_shift*path[i][2] - 500 + ownship_start[0])
         past = path[i][0]
 
-    start_point = np.array([scaler_shift*start[1] + ownship_start[1], scaler_shift*start[2]-1000 + ownship_start[0]])
-    end_point = np.array([scaler_shift*end[1] + ownship_start[1], scaler_shift*end[2]-1000 + ownship_start[0]])
+    start_point = np.array([scaler_shift*start[1] + ownship_start[1], scaler_shift*start[2]-500 + ownship_start[0]])
+    end_point = np.array([scaler_shift*end[1] + ownship_start[1], scaler_shift*end[2]-500 + ownship_start[0]])
 
     return x0, start_point, end_point
     
@@ -229,7 +229,7 @@ def optimize_path(x0, start_point, end_point, array_of_vertices, num_intruders):
     return res
 
 def optimize_path_probability(x0, start_point, end_point, wedges):
-    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 80.0)
+    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 40.0)
     dnlc = NonlinearConstraint(lambda x: probability_constraint(x, wedges), -np.inf, 0.00001)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
@@ -237,7 +237,7 @@ def optimize_path_probability(x0, start_point, end_point, wedges):
     
 
 def plot_solution(x0, res, list_of_vertices, ownship_start):
-    x, y = np.linspace(ownship_start[0] - 1000, ownship_start[0] + 1000, 25), np.linspace(ownship_start[1], ownship_start[1] + 2000, 25)
+    x, y = np.linspace(ownship_start[0] - 500, ownship_start[0] + 500, 25), np.linspace(ownship_start[1], ownship_start[1] + 1000, 25)
     X, Y = np.meshgrid(x, y)
 
     fig = plt.figure()
@@ -254,8 +254,8 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     ax.plot(res.x[-1], res.x[-2], 24, 'o', color='blue', markersize=4, label='Optimal control points')
 
     ax.set_zlim(0, 25)
-    ax.set_xlim([ownship_start[0] - 1000, ownship_start[0] + 1000])
-    ax.set_ylim([ownship_start[1], ownship_start[1] + 2000])
+    ax.set_xlim([ownship_start[0] - 500, ownship_start[0] + 500])
+    ax.set_ylim([ownship_start[1], ownship_start[1] + 1000])
     ax.set_xlabel('E')
     ax.set_ylabel('N')
     # ax.set_zlabel('Time in Seconds')
@@ -277,8 +277,8 @@ def animate_path(ownship_start, curve, list_of_vertices):
         plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
     
-    plt.xlim([ownship_start[0] - 1000, ownship_start[0] + 1000])
-    plt.ylim([ownship_start[1]-100, ownship_start[1] + 2000])
+    plt.xlim([ownship_start[0] - 500, ownship_start[0] + 500])
+    plt.ylim([ownship_start[1]-100, ownship_start[1] + 1000])
 
     plt.savefig('visualAvoidance2D/figures/first_frame.png', dpi=300)
     
@@ -301,8 +301,8 @@ def animate_path(ownship_start, curve, list_of_vertices):
             ax.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
             
-        ax.set_xlim([ownship_start[0] - 1000, ownship_start[0] + 1000])
-        ax.set_ylim([ownship_start[1], ownship_start[1] + 2000])
+        ax.set_xlim([ownship_start[0] - 500, ownship_start[0] + 500])
+        ax.set_ylim([ownship_start[1], ownship_start[1] + 1000])
     
     ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)+1), repeat=False)
 
@@ -334,7 +334,7 @@ def ion_code(filepath_real, filepath_bearing):
 
     plt.show()
 
-    x0, start_point, end_point = initialize_x0(path, start, end, 25, ownship[11])
+    x0, start_point, end_point = initialize_x0(path, start, end, 25, ownship[30])
     array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
     print(start, end)
     print(start_point, end_point)
@@ -356,8 +356,8 @@ if __name__ == '__main__':
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
     num_intruders = len(intruders)
 
-    wedges = create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)
-    # ion_code(filepath_real, filepath_bearing)
+    # wedges = create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)
+    ion_code(filepath_real, filepath_bearing)
     
 
 
