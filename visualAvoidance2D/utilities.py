@@ -428,7 +428,7 @@ class WedgeEstimator:
         # rotate the points back 
         points = (R @ points.T).T
         n_points = len(points)
-        print(n_points)
+        # print(n_points)
         
         # get the covariance and weights then generate the GMM
         cov = R @ np.diag([(r/5)**2,(perp_dist/5)**2]) @ R.T
