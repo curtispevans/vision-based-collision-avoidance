@@ -12,6 +12,7 @@ from plotting_bspline_trajectory import get_bspline_path
 
 intruder_wingspan = 10
 ts = 1/30
+solution_span = 1000
 
 def get_ownship_intruder_positions(filepath):
     real = np.load(filepath)
@@ -137,8 +138,8 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
         if idx_sec < len(ownship):
             own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
             plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=i/steps)
-            plt.xlim(start[0]-1000, start[0] + 1000)
-            plt.ylim(start[1], start[1] + 2000)
+            plt.xlim(start[0]-solution_span, start[0] + solution_span)
+            plt.ylim(start[1], start[1] + 2*solution_span)
             plt.xlabel('East')
             plt.ylabel('North')
             plt.pause(0.01)
@@ -164,7 +165,7 @@ def plot_bearings_sizes_rhos(bearings, sizes, rhos):
 
 def make_voxel_map_for_a_star(wedges, ownship, intruders):
     start = ownship[30]
-    x, y = np.linspace(start[0] - 500, start[0] + 500, 25), np.linspace(start[1], start[1] + 1000, 25)
+    x, y = np.linspace(start[0] - solution_span, start[0] + solution_span, 25), np.linspace(start[1], start[1] + 2*solution_span, 25)
     X, Y = np.meshgrid(x, y)
 
     list_of_vertices = []
@@ -195,8 +196,8 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
         if idx_sec < len(ownship):
             own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
             plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=idx_sec/len(ownship))
-            plt.xlim(start[0]-500, start[0] + 500)
-            plt.ylim(start[1], start[1] + 1000)
+            plt.xlim(start[0]-solution_span, start[0] + solution_span)
+            plt.ylim(start[1], start[1] + 2*solution_span)
             plt.xlabel('E')
             plt.ylabel('N')
             plt.pause(0.01)
@@ -207,29 +208,31 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
     return in_out_wedge_list, list_of_vertices
 
 def initialize_x0(path, start, end, dim, ownship_start):
-    scaler_shift = 1000/dim
+    scaler_shift = 2*solution_span/dim
     x0 = []
     past = -1
     for i in range(len(path)):
         if path[i][0] != past:
             x0.append(scaler_shift*path[i][1] + ownship_start[1])
-            x0.append(scaler_shift*path[i][2] - 500 + ownship_start[0])
+            x0.append(scaler_shift*path[i][2] - solution_span + ownship_start[0])
         past = path[i][0]
 
-    start_point = np.array([scaler_shift*start[1] + ownship_start[1], scaler_shift*start[2]-500 + ownship_start[0]])
-    end_point = np.array([scaler_shift*end[1] + ownship_start[1], scaler_shift*end[2]-500 + ownship_start[0]])
+    start_point = np.array([scaler_shift*start[1] + ownship_start[1], scaler_shift*start[2]-solution_span + ownship_start[0]])
+    end_point = np.array([scaler_shift*end[1] + ownship_start[1], scaler_shift*end[2]-solution_span + ownship_start[0]])
 
     return x0, start_point, end_point
     
 def optimize_path(x0, start_point, end_point, array_of_vertices, num_intruders):
-    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 80.0)
+    vel_threshold = 2*solution_span/25.
+    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
     dnlc = NonlinearConstraint(lambda x: distance_constraint(x, array_of_vertices), -np.inf, -500*num_intruders)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
     return res
 
 def optimize_path_probability(x0, start_point, end_point, wedges):
-    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, 40.0)
+    vel_threshold = 2*solution_span/25.
+    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
     dnlc = NonlinearConstraint(lambda x: probability_constraint(x, wedges), -np.inf, 0.00001)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
@@ -237,7 +240,7 @@ def optimize_path_probability(x0, start_point, end_point, wedges):
     
 
 def plot_solution(x0, res, list_of_vertices, ownship_start):
-    x, y = np.linspace(ownship_start[0] - 500, ownship_start[0] + 500, 25), np.linspace(ownship_start[1], ownship_start[1] + 1000, 25)
+    x, y = np.linspace(ownship_start[0] - solution_span, ownship_start[0] + solution_span, 25), np.linspace(ownship_start[1], ownship_start[1] + 2*solution_span, 25)
     X, Y = np.meshgrid(x, y)
 
     fig = plt.figure()
@@ -254,8 +257,8 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     ax.plot(res.x[-1], res.x[-2], 24, 'o', color='blue', markersize=4, label='Optimal control points')
 
     ax.set_zlim(0, 25)
-    ax.set_xlim([ownship_start[0] - 500, ownship_start[0] + 500])
-    ax.set_ylim([ownship_start[1], ownship_start[1] + 1000])
+    ax.set_xlim([ownship_start[0] - solution_span, ownship_start[0] + solution_span])
+    ax.set_ylim([ownship_start[1], ownship_start[1] + 2*solution_span])
     ax.set_xlabel('E')
     ax.set_ylabel('N')
     # ax.set_zlabel('Time in Seconds')
@@ -277,11 +280,13 @@ def animate_path(ownship_start, curve, list_of_vertices):
         plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
     
-    plt.xlim([ownship_start[0] - 500, ownship_start[0] + 500])
-    plt.ylim([ownship_start[1]-100, ownship_start[1] + 1000])
+    plt.xlim([ownship_start[0] - solution_span, ownship_start[0] + solution_span])
+    plt.ylim([ownship_start[1]-100, ownship_start[1] + 2*solution_span])
 
+    plt.grid(True)
     plt.savefig('visualAvoidance2D/figures/first_frame.png', dpi=300)
     
+
     fig, ax = plt.subplots(dpi=300)
     
     def update(frame):
@@ -301,8 +306,9 @@ def animate_path(ownship_start, curve, list_of_vertices):
             ax.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
             
-        ax.set_xlim([ownship_start[0] - 500, ownship_start[0] + 500])
-        ax.set_ylim([ownship_start[1], ownship_start[1] + 1000])
+        ax.set_xlim([ownship_start[0] - solution_span, ownship_start[0] + solution_span])
+        ax.set_ylim([ownship_start[1], ownship_start[1] + 2*solution_span])
+        ax.grid(True)
     
     ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)+1), repeat=False)
 
@@ -349,8 +355,8 @@ def ion_code(filepath_real, filepath_bearing):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
