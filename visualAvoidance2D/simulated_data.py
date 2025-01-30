@@ -10,7 +10,7 @@ from pathplannerutility import bidirectional_a_star, binarize_matrix, con_cltr_p
 from objective_function_ideas import distance_constraint, probability_constraint
 from plotting_bspline_trajectory import get_bspline_path
 
-intruder_wingspan = 10
+intruder_wingspan = 20
 ts = 1/30
 solution_span = 1000
 
@@ -345,7 +345,8 @@ def ion_code(filepath_real, filepath_bearing):
     print(start, end)
     print(start_point, end_point)
     start = time.time()
-    res = optimize_path_probability(x0, start_point, end_point, wedges)
+    # res = optimize_path_probability(x0, start_point, end_point, wedges)
+    res = optimize_path(x0, start_point, end_point, array_of_vertices, num_intruders)
     print("Optimization time: ", round(time.time() - start,5), " seconds")
 
     curve = get_bspline_path(res.x.reshape(-1,2), 3)
@@ -355,8 +356,8 @@ def ion_code(filepath_real, filepath_bearing):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0002/20241205_151830_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
