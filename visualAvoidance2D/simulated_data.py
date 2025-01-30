@@ -58,7 +58,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
 
     print("Bearing difference mean: ", circmean(bearing_diff, axis=1))
     wedges = []
-    num = 30
+    num = 10
     for i in range(num_intruders):
         wedge = WedgeEstimator()
         wedge.set_velocity_position(bearings[i][:num], sizes[i][:num], [0.0]*num, ownship[:num].reshape(num,2,1))
@@ -126,7 +126,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
     steps = 6
 
     for i in range(steps):
-        idx_sec = 30 + 30*i
+        idx_sec = 10 + 30*i
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             if idx_sec < len(intruders[j]):
@@ -164,7 +164,7 @@ def plot_bearings_sizes_rhos(bearings, sizes, rhos):
         plt.show()
 
 def make_voxel_map_for_a_star(wedges, ownship, intruders):
-    start = ownship[30]
+    start = ownship[10]
     x, y = np.linspace(start[0] - solution_span, start[0] + solution_span, 25), np.linspace(start[1], start[1] + 2*solution_span, 25)
     X, Y = np.meshgrid(x, y)
 
@@ -179,7 +179,7 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
         Z = np.zeros((25, 25))
         vertices = []
         points = np.vstack((Y.ravel(), X.ravel())).T
-        idx_sec = 30 + i*30
+        idx_sec = 10 + i*30
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             vertices.append(vertice)
@@ -340,7 +340,7 @@ def ion_code(filepath_real, filepath_bearing):
 
     plt.show()
 
-    x0, start_point, end_point = initialize_x0(path, start, end, 25, ownship[30])
+    x0, start_point, end_point = initialize_x0(path, start, end, 25, ownship[10])
     array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
     print(start, end)
     print(start_point, end_point)
