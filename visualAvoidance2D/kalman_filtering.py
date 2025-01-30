@@ -15,8 +15,8 @@ def motion_model(x, u, delta_t):
     f = jnp.array([eta*(los_y**2*v_x - los_x*los_y*v_y),
                    eta*(-los_x*los_y*v_x + los_x**2*v_y),
                    -2*pixel_size*eta*bearing_dot_relative_velocity,
-                   u[0],
-                   u[1],
+                   -u[0],
+                   -u[1],
                    -eta**2*bearing_dot_relative_velocity])
     return x + f*delta_t
 
@@ -143,11 +143,15 @@ def maneuver():
     filepath = "visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy"
     ownship, maneuver, intruders, velocity, acceleration = get_ownship_and_intruders_from_filepath(filepath)
     bearings, pixel_sizes = calculate_bearing_pixel_size(maneuver, intruders)
-    for j in range(3):
+    for j in range(0,3,1):
         bearing1 = bearings[j]
         size1 = pixel_sizes[j]
-        mu = jnp.array([jnp.cos(bearing1[0]), jnp.sin(bearing1[0]), size1[0], 10, 10, 0])
-        sigma = jnp.eye(6)
+        mu = jnp.array([jnp.cos(bearing1[0]), jnp.sin(bearing1[0]), size1[0], 0, 0, 0])
+        sigma = np.eye(6)
+        sigma[:2,:2] = np.eye(2)*0.01
+        sigma[3,3] = 10
+        sigma[3:,3:] = np.eye(3)*100
+        sigma = jnp.array(sigma)
         plt.plot(maneuver[:,0], maneuver[:,1], 'o')
         plt.plot(intruders[j][:,0], intruders[j][:,1], 'o')
         plt.axis('equal')
@@ -155,7 +159,7 @@ def maneuver():
         true_dist = np.linalg.norm(intruders[j] - maneuver, axis=1)
 
         R = np.eye(6)*0.1
-        R[2,2] = 10
+        
         R = jnp.array(R)
         Q = jnp.eye(3)*0.1
         delta_t = 1/30
@@ -164,6 +168,7 @@ def maneuver():
         angles = []
         sizes = []
         dist = []
+        std_dist = []
 
         for i in range(1, len(bearing1)-2):
             bearing = bearing1[i]
@@ -171,8 +176,10 @@ def maneuver():
             measurement = jnp.array([jnp.cos(bearing), jnp.sin(bearing), size])
             mu, sigma = kalman_update(mu, sigma, control[i], measurement, R, Q, delta_t)
             dist.append(1/mu[-1])
+            std_dist.append(np.sqrt(sigma[-1,-1]))
             angles.append(np.arctan2(mu[1], mu[0]))
             sizes.append(mu[2])
+            # print(sigma, '\n\n')
         
         plt.plot(bearing1, 'o', label='Measured')
         plt.plot(angles, 'o', label='Estimated')
@@ -187,10 +194,16 @@ def maneuver():
         plt.show()
 
         dist = np.array(dist)
-        plt.plot(true_dist[:], 'o', label='True')
-        plt.plot(dist[:], 'o', label='Estimated')
+        plt.plot(true_dist[:], 'o', label='True', markersize=2)
+        plt.plot(dist[:], 'o', label='Estimated', markersize=2)
+        # plt.plot(np.array(dist) + 3*np.array(std_dist), '-g')
+        # plt.plot(np.array(dist) - 3*np.array(std_dist), '-g')
+        plt.ylim(-100, 5000)
         plt.legend()
         plt.title('Distance')
+        plt.show()
+
+        plt.plot(std_dist)
         plt.show()
 
 
