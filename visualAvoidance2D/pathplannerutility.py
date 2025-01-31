@@ -116,7 +116,7 @@ def con_cltr_pnt(x, start_point):
     con = []
     # NOTE using the square root is probably not necessary but I cant get it to work without it. I square the bounded distance and it still won't work
     con = np.zeros(len(x)//2)
-    x = np.array([start_point[0], start_point[1]] + list(x))
+    # x = np.arraylist(x))
     x_temp = x.reshape(len(x)//2, 2).T
     # con = []
     # dist = np.linalg.norm(x_temp[:,0] - start_point)

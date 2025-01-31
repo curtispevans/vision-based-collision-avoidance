@@ -172,6 +172,17 @@ def distance_constraint(x, vertice_list):
 
     return distances
 
+def distance_constraint_vectorized(x, vertice_list):
+    num_intruders = len(vertice_list[0])
+    distances = np.zeros(num_intruders*len(x)//2)
+
+    for i in range(0, len(x), 2):
+        for j, vertices in enumerate(vertice_list[i//2]):
+            distances[num_intruders*i//2 + j] = distance_function(np.array([x[i], x[i+1]]), vertices)
+
+    # print(distances)
+    return distances
+
 def probability_constraint(x, wedges):
     sim_time = 0
     pdf_values = []

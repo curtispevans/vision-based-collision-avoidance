@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import time
-from scipy.optimize import NonlinearConstraint, minimize
+from scipy.optimize import NonlinearConstraint, minimize, LinearConstraint
 from scipy.stats import circmean
 
 from utilities import WedgeEstimator, are_inside_wedge
 from pathplannerutility import bidirectional_a_star, binarize_matrix, con_cltr_pnt, object_function_new
-from objective_function_ideas import distance_constraint, probability_constraint
+from objective_function_ideas import distance_constraint, probability_constraint, distance_constraint_vectorized
 from plotting_bspline_trajectory import get_bspline_path
 
 intruder_wingspan = 20
@@ -230,6 +230,17 @@ def optimize_path(x0, start_point, end_point, array_of_vertices, num_intruders):
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc], )
     return res
 
+def optimize_path_vectorized(x0, start_point, end_point, array_of_vertices, num_intruders):
+    vel_threshold = 2*solution_span/25.
+    
+    buffer = np.ones(2)*3
+    start_point_constraint = LinearConstraint(np.eye(2, len(x0)), start_point-buffer, start_point+buffer)
+    nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
+    dnlc = NonlinearConstraint(lambda x: distance_constraint_vectorized(x, array_of_vertices), -np.inf, -100)
+    bounds = None
+    res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc,start_point_constraint], )
+    return res
+
 def optimize_path_probability(x0, start_point, end_point, wedges):
     vel_threshold = 2*solution_span/25.
     nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
@@ -307,7 +318,7 @@ def animate_path(ownship_start, curve, list_of_vertices):
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
             
         ax.set_xlim([ownship_start[0] - solution_span, ownship_start[0] + solution_span])
-        ax.set_ylim([ownship_start[1], ownship_start[1] + 2*solution_span])
+        ax.set_ylim([ownship_start[1]-100, ownship_start[1] + 2*solution_span])
         ax.grid(True)
     
     ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)+1), repeat=False)
@@ -322,6 +333,7 @@ def ion_code(filepath_real, filepath_bearing):
 
     wedges = create_wedges(ownship, intruders, bearings, sizes, plot=True, button_press=False)
     in_out_wedge_list, list_of_vertices = make_voxel_map_for_a_star(wedges, ownship, intruders)
+    
     data = np.array(in_out_wedge_list)
     binary_matrix = binarize_matrix(data, 0)
     start = (0,0,13)
@@ -344,9 +356,11 @@ def ion_code(filepath_real, filepath_bearing):
     array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
     print(start, end)
     print(start_point, end_point)
+    print(x0[:2])
     start = time.time()
     # res = optimize_path_probability(x0, start_point, end_point, wedges)
-    res = optimize_path(x0, start_point, end_point, array_of_vertices, num_intruders)
+    res = optimize_path_vectorized(x0, start_point, end_point, array_of_vertices, num_intruders)
+    print(res.x[:2])
     print("Optimization time: ", round(time.time() - start,5), " seconds")
 
     curve = get_bspline_path(res.x.reshape(-1,2), 3)
