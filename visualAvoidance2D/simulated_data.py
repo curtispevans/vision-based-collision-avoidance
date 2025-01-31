@@ -370,8 +370,8 @@ def ion_code(filepath_real, filepath_bearing):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0002/20241205_151830_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
