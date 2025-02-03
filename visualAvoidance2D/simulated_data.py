@@ -236,9 +236,9 @@ def optimize_path_vectorized(x0, start_point, end_point, array_of_vertices, num_
     buffer = np.ones(2)*3
     start_point_constraint = LinearConstraint(np.eye(2, len(x0)), start_point-buffer, start_point+buffer)
     nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
-    dnlc = NonlinearConstraint(lambda x: distance_constraint_vectorized(x, array_of_vertices), -np.inf, -100)
+    dnlc = NonlinearConstraint(lambda x: distance_constraint_vectorized(x, array_of_vertices), -np.inf, -50)
     bounds = None
-    res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc,start_point_constraint], )
+    res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc,], )
     return res
 
 def optimize_path_probability(x0, start_point, end_point, wedges):
