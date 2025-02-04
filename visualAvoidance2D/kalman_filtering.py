@@ -24,6 +24,7 @@ def jacobian_jax(x, u, delta_t):
     return jacfwd(motion_model, argnums=0)(x, u, delta_t)
 
 def measurement_model(x):
+    # add unit length constraint for los
     H = jnp.array([[1,0,0,0,0,0],
                    [0,1,0,0,0,0],
                    [0,0,1,0,0,0]])
