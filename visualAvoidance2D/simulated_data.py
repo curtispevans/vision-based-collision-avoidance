@@ -10,9 +10,9 @@ from pathplannerutility import bidirectional_a_star, binarize_matrix, con_cltr_p
 from objective_function_ideas import distance_constraint, probability_constraint, distance_constraint_vectorized
 from plotting_bspline_trajectory import get_bspline_path
 
-intruder_wingspan = 20
+intruder_wingspan = 10
 ts = 1/30
-solution_span = 1000
+solution_span = 500
 
 def get_ownship_intruder_positions(filepath):
     real = np.load(filepath)
@@ -58,7 +58,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
 
     print("Bearing difference mean: ", circmean(bearing_diff, axis=1))
     wedges = []
-    num = 10
+    num = 30
     for i in range(num_intruders):
         wedge = WedgeEstimator()
         wedge.set_velocity_position(bearings[i][:num], sizes[i][:num], [0.0]*num, ownship[:num].reshape(num,2,1))
@@ -126,7 +126,7 @@ def create_wedges(ownship, intruders, bearing_measurements, pixel_size, plot=Fal
     steps = 6
 
     for i in range(steps):
-        idx_sec = 10 + 30*i
+        idx_sec = 30 + 30*i
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             if idx_sec < len(intruders[j]):
@@ -164,7 +164,7 @@ def plot_bearings_sizes_rhos(bearings, sizes, rhos):
         plt.show()
 
 def make_voxel_map_for_a_star(wedges, ownship, intruders):
-    start = ownship[10]
+    start = ownship[30]
     x, y = np.linspace(start[0] - solution_span, start[0] + solution_span, 25), np.linspace(start[1], start[1] + 2*solution_span, 25)
     X, Y = np.meshgrid(x, y)
 
@@ -179,7 +179,7 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders):
         Z = np.zeros((25, 25))
         vertices = []
         points = np.vstack((Y.ravel(), X.ravel())).T
-        idx_sec = 10 + i*30
+        idx_sec = 30 + i*30
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             vertices.append(vertice)
@@ -275,9 +275,9 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     # ax.set_zlabel('Time in Seconds')
     ax.legend(loc='lower right')
 
-    ax.view_init(elev=90, azim=-90)
-    ax.set_zticks([])
-    ax.set_zlabel('')
+    # ax.view_init(elev=90, azim=-90)
+    # ax.set_zticks([])
+    # ax.set_zlabel('')
     
     plt.tight_layout()
     plt.savefig('visualAvoidance2D/figures/optimal_control_points.png', dpi=300)
@@ -318,7 +318,7 @@ def animate_path(ownship_start, curve, list_of_vertices):
                     [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1)
             
         ax.set_xlim([ownship_start[0] - solution_span, ownship_start[0] + solution_span])
-        ax.set_ylim([ownship_start[1]-100, ownship_start[1] + 2*solution_span])
+        ax.set_ylim([ownship_start[1] - 100, ownship_start[1] + 2*solution_span])
         ax.grid(True)
     
     ani = animation.FuncAnimation(fig, update, frames=range(len(list_of_vertices)+1), repeat=False)
@@ -352,14 +352,14 @@ def ion_code(filepath_real, filepath_bearing):
 
     plt.show()
 
-    x0, start_point, end_point = initialize_x0(path, start, end, 25, ownship[10])
+    x0, start_point, end_point = initialize_x0(path, start, end, 25, ownship[30])
     array_of_vertices = np.array(list_of_vertices).reshape(25,num_intruders,4,2)
     print(start, end)
     print(start_point, end_point)
     print(x0[:2])
     start = time.time()
     # res = optimize_path_probability(x0, start_point, end_point, wedges)
-    res = optimize_path_vectorized(x0, start_point, end_point, array_of_vertices, num_intruders)
+    res = optimize_path_probability(x0, start_point, end_point, wedges)
     print(res.x[:2])
     print("Optimization time: ", round(time.time() - start,5), " seconds")
 
@@ -370,8 +370,8 @@ def ion_code(filepath_real, filepath_bearing):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0004/20241205_152650_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)

@@ -16,9 +16,9 @@ uav_size = uav_scale * uav_wingspan
 bearing_uncertainty = 0.1
 
 # This is the smallest pixel area that an intruder could possibly be
-min_area = 10
+min_area = 5
 # This is the largest pixel area that an intruder could possibly be
-max_area = 25
+max_area = 15
 
 ############################################################################################################
 
