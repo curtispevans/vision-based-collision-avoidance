@@ -3,6 +3,7 @@ import heapq
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, LinearConstraint, NonlinearConstraint
 from scipy.interpolate import BSpline
+import params
 
 solution_span = 1000
 ts = 1/30
@@ -125,7 +126,7 @@ def bidirectional_a_star(grid, start, goal):
 
 
 def make_voxel_map_for_a_star(wedges, ownship, intruders, plotting=False):
-    start = ownship[10]
+    start = ownship[params.measured_window]
     x, y = np.linspace(start[0] - solution_span, start[0] + solution_span, 25), np.linspace(start[1], start[1] + 2*solution_span, 25)
     X, Y = np.meshgrid(x, y)
 
@@ -140,7 +141,7 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders, plotting=False):
         Z = np.zeros((25, 25))
         vertices = []
         points = np.vstack((Y.ravel(), X.ravel())).T
-        idx_sec = 10 + i*30
+        idx_sec = params.measured_window + i*30
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             vertices.append(vertice)

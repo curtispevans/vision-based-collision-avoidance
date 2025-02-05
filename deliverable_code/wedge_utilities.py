@@ -1,13 +1,11 @@
 import numpy as np
-
+from params import ts_simulation, min_area, max_area, bearing_uncertainty
 
 
 
 class WedgeEstimator:
     def __init__(self) -> None:
         self.ts = ts_simulation
-        tau = self.ts/3
-        
 
         # this is the smallest and largest area that the intruder can be in
         self.smallest_intruder_area = min_area
