@@ -14,7 +14,7 @@ class WedgeEstimator:
         self.bearing_uncertainty = bearing_uncertainty
 
 
-    def set_velocity_position(self, bearing_angles, sizes, thetas, ownship_positions):
+    def set_velocity_position(self, bearing_angles, sizes, ownship_positions):
         """Sets the position and velocity of the intruder based on two measurements
         
         Parameters:
@@ -27,7 +27,7 @@ class WedgeEstimator:
         close_positions = []
         far_positions = []
 
-        for bearing, size, theta, ownship_pos in zip(bearing_angles, sizes, thetas, ownship_positions):
+        for bearing, size in zip(bearing_angles, sizes):
             # get the range of the intruder
             intruder_min_range = self.smallest_intruder_area / size
             intruder_max_range = self.largest_intruder_area / size
@@ -60,7 +60,7 @@ class WedgeEstimator:
         Return the vertices of the wedge at a given time
         """
         # get the vertices of the wedge
-        vertices, intruder_dir, r = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
+        vertices = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
         ownship_pos = self.init_own_pos + self.init_own_vel * t
         vertices += np.array([[ownship_pos[1], ownship_pos[0]]])
         return vertices
@@ -79,7 +79,7 @@ def rotation_matrix(theta):
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
-def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, init_own_pos, init_own_vel, bearing_uncertainty):
+def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, bearing_uncertainty):
     """
     Returns the wedge at the given time.
     
@@ -100,9 +100,6 @@ def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, init_own_pos, 
     # get the future positions of the intruders
     close_fut_pos = close_pos + t * close_vel
     far_fut_pos = far_pos + t * far_vel
-
-    # get the future position of the ownship
-    own_fut_pos = init_own_pos + t * init_own_vel
 
     # get the direction of the intruder
     intruder_dir = far_fut_pos - close_fut_pos
@@ -125,7 +122,7 @@ def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, init_own_pos, 
     far_right = far_fut_pos + far_lateral_dist
     far_left = far_fut_pos - far_lateral_dist
 
-    return np.array([far_right, close_right, close_left, far_left]), intruder_dir, np.linalg.norm(intruder_dir)
+    return np.array([far_right, close_right, close_left, far_left])
     
 
 

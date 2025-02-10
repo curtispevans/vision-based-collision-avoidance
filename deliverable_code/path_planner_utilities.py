@@ -1,14 +1,17 @@
 import numpy as np
+from numpy.typing import NDArray, float64
 import heapq
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, LinearConstraint, NonlinearConstraint
 from scipy.interpolate import BSpline
+from wedge_utilities import WedgeEstimator
 import params
+from typing import List, Tuple
 
 solution_span = 1000
 ts = 1/30
 
-def are_inside_wedge(points, vertices):
+def are_inside_wedge(points : NDArray, vertices : NDArray) -> NDArray:
     # for this function to work a and b must be (2,) and o must be (n,2)
     v1, v2, v3, v4 = vertices
     def sign(a, b, o):
@@ -25,8 +28,12 @@ def are_inside_wedge(points, vertices):
     
     return ~(has_neg & has_pos)
 
+def create_wedge(bearing_angles : List, sizes : List, ownship_positions : List[NDArray]) -> WedgeEstimator:
+    wedge = WedgeEstimator()
+    wedge.set_velocity_position(bearing_angles, sizes, ownship_positions)
+    return wedge
 
-def binarize_matrix(matrix, threshold):
+def binarize_matrix(matrix : NDArray, threshold : float64) -> NDArray:
     matrix = np.array(matrix)
     binary_matrix = (matrix > threshold).astype(int)
     return binary_matrix
@@ -125,7 +132,7 @@ def bidirectional_a_star(grid, start, goal):
     return None
 
 
-def make_voxel_map_for_a_star(wedges, ownship, intruders, plotting=False):
+def get_in_out_wedges_and_vertices(wedges : List, ownship : NDArray, plotting=False) -> Tuple[List[NDArray], List[NDArray]]:
     start = ownship[params.measured_window]
     x, y = np.linspace(start[0] - solution_span, start[0] + solution_span, 25), np.linspace(start[1], start[1] + 2*solution_span, 25)
     X, Y = np.meshgrid(x, y)
@@ -148,10 +155,8 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders, plotting=False):
             Z += are_inside_wedge(points, vertice).reshape(25, 25)
 
             if plotting:
-                if idx_sec < len(intruders[j]):
-                    plt.plot(intruders[j][idx_sec,0], intruders[j][idx_sec,1], colors[j][0]+'o', markersize=2, alpha=idx_sec/len(ownship))
-                    plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
-                                [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=idx_sec/len(ownship))
+                plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
+                         [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=idx_sec/len(ownship))
         
         list_of_vertices.append(vertices)
         in_out_wedge_list.append(Z)
@@ -172,7 +177,7 @@ def make_voxel_map_for_a_star(wedges, ownship, intruders, plotting=False):
     return in_out_wedge_list, list_of_vertices
 
 
-def con_cltr_pnt(x, start_point):
+def con_cltr_pnt(x : List, start_point : List) -> List:
     con = []
     # NOTE using the square root is probably not necessary but I cant get it to work without it. I square the bounded distance and it still won't work
     con = np.zeros(len(x)//2)
@@ -184,11 +189,11 @@ def con_cltr_pnt(x, start_point):
     return con
 
 
-def compute_cross_product2D(a, b):
+def compute_cross_product2D(a : NDArray, b : NDArray) -> float:
     return a[0]*b[1] - a[1]*b[0]
 
 
-def compute_relavant_cross_products(p, vertices):
+def compute_relavant_cross_products(p : NDArray, vertices : NDArray) -> Tuple[float64, float64, float64, float64]:
     '''The vertices come in a list of 4 points, with the first point being the top right point of the wedge, 
        the second point being the bottom right point of the wedge, the third point being the bottom left point of the wedge,
        and the fourth point being the top left point of the wedge.'''
@@ -199,15 +204,15 @@ def compute_relavant_cross_products(p, vertices):
     return right, bottom, left, top
 
 
-def project_vector_onto_vector(a, b):
+def project_vector_onto_vector(a : NDArray, b : NDArray) -> NDArray:
     return np.dot(a, b) / np.dot(b,b) * b
 
 
-def compute_distance(a, b):
+def compute_distance(a : NDArray, b : NDArray) -> float64:
     return np.linalg.norm(a - b)
 
 
-def compute_distance_to_edge(point, v1, v2):
+def compute_distance_to_edge(point : NDArray, v1 : NDArray, v2 : NDArray) -> float64:
     v2_minus_point = point - v1
     v1_minus_v2 = v2 - v1
     projection = project_vector_onto_vector(v2_minus_point, v1_minus_v2)
@@ -215,7 +220,7 @@ def compute_distance_to_edge(point, v1, v2):
     return distance
 
 
-def get_distance_from_edge_with_point_inside_wedge(p, vertices):
+def get_distance_from_edge_with_point_inside_wedge(p : NDArray, vertices : NDArray) -> float64:
     '''This function returns the distance from the point to the closest edge of the wedge'''
     distances = []
     distances.append(compute_distance_to_edge(p, vertices[0], vertices[1]))
@@ -225,7 +230,7 @@ def get_distance_from_edge_with_point_inside_wedge(p, vertices):
     return min(distances)
 
 
-def distance_function(p, vertices):
+def distance_function(p : NDArray, vertices : NDArray) -> float64:
     right, bottom, left, top = compute_relavant_cross_products(p, vertices)
     logic = np.array([right, bottom, left, top])
     if sum(logic < 0) == 4:
@@ -255,11 +260,11 @@ def distance_function(p, vertices):
         return -compute_distance_to_edge(p, vertices[1], vertices[2])
     
 
-def compute_cross_product2D_vectorized(a, b):
+def compute_cross_product2D_vectorized(a : NDArray, b : NDArray) -> NDArray:
     return a[:,0]*b[:,1] - a[:,1]*b[:,0]
 
 
-def distance_constraint_vectorized(x, vertice_list):
+def distance_constraint_vectorized(x : List[float64], vertice_list : List[NDArray]) -> NDArray:
     num_intruders = len(vertice_list[0])
     distances = np.zeros(num_intruders*len(x)//2)
 
@@ -271,7 +276,7 @@ def distance_constraint_vectorized(x, vertice_list):
     return distances
 
 
-def object_function_new(x, goalPosition=(20,20)):
+def object_function_new(x : List[float64], goalPosition: Tuple[float64, float64]=(20., 20.)) -> float64:
     '''Calculate the difference between the goal position and the current
     position of the distance'''
     res = 0
@@ -279,7 +284,7 @@ def object_function_new(x, goalPosition=(20,20)):
     return res
 
 
-def initialize_x0(path, start, end, dim, ownship_start):
+def initialize_x0(path : List[float64], start : Tuple[float64, float64, float64], end : Tuple[float64, float64, float64], dim : int, ownship_start : NDArray) -> Tuple[List[float64], Tuple[float64, float64], Tuple[float64, float64]]:
     scaler_shift = 2*solution_span/dim
     x0 = []
     past = -1
@@ -295,7 +300,7 @@ def initialize_x0(path, start, end, dim, ownship_start):
     return x0, start_point, end_point
 
 
-def optimize_path_vectorized(x0, start_point, end_point, array_of_vertices, num_intruders):
+def optimize_path_vectorized(x0 : List[NDArray], start_point : Tuple[float64, float64], end_point : Tuple[float64, float64], array_of_vertices : NDArray) -> NDArray:
     vel_threshold = 2*solution_span/25.
     
     buffer = np.ones(2)*3
@@ -307,13 +312,13 @@ def optimize_path_vectorized(x0, start_point, end_point, array_of_vertices, num_
     return res
 
 
-def get_knot_points(num_control_points, degree):
+def get_knot_points(num_control_points : int, degree : int) -> NDArray:
     num_knots = num_control_points + degree + 1
     knots = np.concatenate((np.zeros(degree), np.linspace(0,1,num_knots-2*degree), np.ones(degree)))
     return knots
 
 
-def get_bspline_path(control_points, degree):
+def get_bspline_path(control_points, degree : int) -> NDArray:
     knots = get_knot_points(len(control_points), degree)
     spl = BSpline(knots, control_points, degree)
     t = np.linspace(0, 1, 100)

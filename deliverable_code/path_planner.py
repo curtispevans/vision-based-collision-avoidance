@@ -1,0 +1,31 @@
+import numpy as np
+from numpy.typing import NDArray
+import params as params
+import path_planner_utilities as ppu
+from typing import List, Tuple
+
+def plan_path(bearing_angles, sizes, ownship_poses, num_intruders):
+    wedges = []
+    for i in range(num_intruders):
+        wedge = ppu.create_wedge(bearing_angles[i], sizes[i], ownship_poses)
+        wedges.append(wedge)
+
+    in_out_wedge_list, list_of_vertices = ppu.get_in_out_wedges_and_vertices(wedges)
+
+    data = np.array(in_out_wedge_list)
+    binary_matrix = ppu.binarize_matrix(data)
+    start = (0, 0, 13) # (time, N, E)
+    end = (24, 24, 13) # (time, N, E)
+    path = ppu.bidirectional_a_star(binary_matrix, start, end)
+
+    ownship_current_position = ownship_poses[params.measured_window]
+    x0, start_point, end_point = ppu.initialize_x0(path, start, end, params.dim_astar, ownship_current_position)
+    array_of_vertices = np.array(list_of_vertices).reshape(params.dim_astar, num_intruders,4,2)
+
+    res = ppu.optimize_path_vectorized(x0, start_point, end_point, array_of_vertices)
+
+    return res.x
+
+
+
+    
