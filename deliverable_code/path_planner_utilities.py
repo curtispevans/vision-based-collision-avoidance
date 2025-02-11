@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.typing import NDArray, float64
+from numpy.typing import NDArray
 import heapq
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, LinearConstraint, NonlinearConstraint
@@ -33,7 +33,7 @@ def create_wedge(bearing_angles : List, sizes : List, ownship_positions : List[N
     wedge.set_velocity_position(bearing_angles, sizes, ownship_positions)
     return wedge
 
-def binarize_matrix(matrix : NDArray, threshold : float64) -> NDArray:
+def binarize_matrix(matrix : NDArray, threshold : float) -> NDArray:
     matrix = np.array(matrix)
     binary_matrix = (matrix > threshold).astype(int)
     return binary_matrix
@@ -193,7 +193,7 @@ def compute_cross_product2D(a : NDArray, b : NDArray) -> float:
     return a[0]*b[1] - a[1]*b[0]
 
 
-def compute_relavant_cross_products(p : NDArray, vertices : NDArray) -> Tuple[float64, float64, float64, float64]:
+def compute_relavant_cross_products(p : NDArray, vertices : NDArray) -> Tuple[float, float, float, float]:
     '''The vertices come in a list of 4 points, with the first point being the top right point of the wedge, 
        the second point being the bottom right point of the wedge, the third point being the bottom left point of the wedge,
        and the fourth point being the top left point of the wedge.'''
@@ -208,11 +208,11 @@ def project_vector_onto_vector(a : NDArray, b : NDArray) -> NDArray:
     return np.dot(a, b) / np.dot(b,b) * b
 
 
-def compute_distance(a : NDArray, b : NDArray) -> float64:
+def compute_distance(a : NDArray, b : NDArray) -> float:
     return np.linalg.norm(a - b)
 
 
-def compute_distance_to_edge(point : NDArray, v1 : NDArray, v2 : NDArray) -> float64:
+def compute_distance_to_edge(point : NDArray, v1 : NDArray, v2 : NDArray) -> float:
     v2_minus_point = point - v1
     v1_minus_v2 = v2 - v1
     projection = project_vector_onto_vector(v2_minus_point, v1_minus_v2)
@@ -220,7 +220,7 @@ def compute_distance_to_edge(point : NDArray, v1 : NDArray, v2 : NDArray) -> flo
     return distance
 
 
-def get_distance_from_edge_with_point_inside_wedge(p : NDArray, vertices : NDArray) -> float64:
+def get_distance_from_edge_with_point_inside_wedge(p : NDArray, vertices : NDArray) -> float:
     '''This function returns the distance from the point to the closest edge of the wedge'''
     distances = []
     distances.append(compute_distance_to_edge(p, vertices[0], vertices[1]))
@@ -230,7 +230,7 @@ def get_distance_from_edge_with_point_inside_wedge(p : NDArray, vertices : NDArr
     return min(distances)
 
 
-def distance_function(p : NDArray, vertices : NDArray) -> float64:
+def distance_function(p : NDArray, vertices : NDArray) -> float:
     right, bottom, left, top = compute_relavant_cross_products(p, vertices)
     logic = np.array([right, bottom, left, top])
     if sum(logic < 0) == 4:
@@ -264,7 +264,7 @@ def compute_cross_product2D_vectorized(a : NDArray, b : NDArray) -> NDArray:
     return a[:,0]*b[:,1] - a[:,1]*b[:,0]
 
 
-def distance_constraint_vectorized(x : List[float64], vertice_list : List[NDArray]) -> NDArray:
+def distance_constraint_vectorized(x : List[float], vertice_list : List[NDArray]) -> NDArray:
     num_intruders = len(vertice_list[0])
     distances = np.zeros(num_intruders*len(x)//2)
 
@@ -276,7 +276,7 @@ def distance_constraint_vectorized(x : List[float64], vertice_list : List[NDArra
     return distances
 
 
-def object_function_new(x : List[float64], goalPosition: Tuple[float64, float64]=(20., 20.)) -> float64:
+def object_function_new(x : List[float], goalPosition: Tuple[float, float]=(20., 20.)) -> float:
     '''Calculate the difference between the goal position and the current
     position of the distance'''
     res = 0
@@ -284,7 +284,7 @@ def object_function_new(x : List[float64], goalPosition: Tuple[float64, float64]
     return res
 
 
-def initialize_x0(path : List[float64], start : Tuple[float64, float64, float64], end : Tuple[float64, float64, float64], dim : int, ownship_start : NDArray) -> Tuple[List[float64], Tuple[float64, float64], Tuple[float64, float64]]:
+def initialize_x0(path : List[float], start : Tuple[float, float, float], end : Tuple[float, float, float], dim : int, ownship_start : NDArray) -> Tuple[List[float], Tuple[float, float], Tuple[float, float]]:
     scaler_shift = 2*solution_span/dim
     x0 = []
     past = -1
@@ -300,7 +300,7 @@ def initialize_x0(path : List[float64], start : Tuple[float64, float64, float64]
     return x0, start_point, end_point
 
 
-def optimize_path_vectorized(x0 : List[NDArray], start_point : Tuple[float64, float64], end_point : Tuple[float64, float64], array_of_vertices : NDArray) -> NDArray:
+def optimize_path_vectorized(x0 : List[NDArray], start_point : Tuple[float, float], end_point : Tuple[float, float], array_of_vertices : NDArray) -> NDArray:
     vel_threshold = 2*solution_span/25.
     
     buffer = np.ones(2)*3

@@ -10,10 +10,10 @@ def plan_path(bearing_angles, sizes, ownship_poses, num_intruders):
         wedge = ppu.create_wedge(bearing_angles[i], sizes[i], ownship_poses)
         wedges.append(wedge)
 
-    in_out_wedge_list, list_of_vertices = ppu.get_in_out_wedges_and_vertices(wedges)
+    in_out_wedge_list, list_of_vertices = ppu.get_in_out_wedges_and_vertices(wedges, ownship_poses)
 
     data = np.array(in_out_wedge_list)
-    binary_matrix = ppu.binarize_matrix(data)
+    binary_matrix = ppu.binarize_matrix(data, 0)
     start = (0, 0, 13) # (time, N, E)
     end = (24, 24, 13) # (time, N, E)
     path = ppu.bidirectional_a_star(binary_matrix, start, end)

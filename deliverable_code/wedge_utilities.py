@@ -60,9 +60,10 @@ class WedgeEstimator:
         Return the vertices of the wedge at a given time
         """
         # get the vertices of the wedge
-        vertices = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.init_own_pos, self.init_own_vel, self.bearing_uncertainty)
+        vertices = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.bearing_uncertainty)
         ownship_pos = self.init_own_pos + self.init_own_vel * t
-        vertices += np.array([[ownship_pos[1], ownship_pos[0]]])
+        # print(np.array([[ownship_pos[1], ownship_pos[0]]]), '\n\n', vertices)
+        vertices += np.array([[ownship_pos[1], ownship_pos[0]]]).T
         return vertices
     
     
