@@ -62,22 +62,9 @@ class WedgeEstimator:
         # get the vertices of the wedge
         vertices = get_wedge_vertices(t, self.close_pos, self.close_vel, self.far_pos, self.far_vel, self.bearing_uncertainty)
         ownship_pos = self.init_own_pos + self.init_own_vel * t
-        # print(np.array([[ownship_pos[1], ownship_pos[0]]]), '\n\n', vertices)
         vertices += np.array([[ownship_pos[1], ownship_pos[0]]]).T
         return vertices
     
-    
-
-def rotation_matrix(theta):
-    """
-    Returns the 2D rotation matrix for the given angle.
-    
-    Parameters:
-        theta (float) - the angle of rotation in radians
-    Returns:
-        (2, 2) ndarray - the rotation matrix
-    """
-    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
 def get_wedge_vertices(t, close_pos, close_vel, far_pos, far_vel, bearing_uncertainty):

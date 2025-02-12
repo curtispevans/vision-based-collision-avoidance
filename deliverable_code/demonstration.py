@@ -34,7 +34,7 @@ bearings, sizes = get_bearing_size_measurements("visualAvoidance2D/data/xplane_d
 ownship, intruders = get_ownship_intruder_positions("visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy")
 
 start = time.time()
-cntrl_pts = plan_path(bearings, sizes, ownship, len(intruders))
+cntrl_pts = plan_path(bearings, sizes, ownship, len(intruders), -150)
 end = time.time()
 print("\nTime taken to plan path: ", end - start, " seconds\n")
 plot_control_points(cntrl_pts)

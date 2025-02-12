@@ -8,8 +8,7 @@ from wedge_utilities import WedgeEstimator
 import params
 from typing import List, Tuple
 
-solution_span = 1000
-ts = 1/30
+
 
 def are_inside_wedge(points : NDArray, vertices : NDArray) -> NDArray:
     # for this function to work a and b must be (2,) and o must be (n,2)
@@ -132,15 +131,14 @@ def bidirectional_a_star(grid, start, goal):
     return None
 
 
-def get_in_out_wedges_and_vertices(wedges : List, ownship : NDArray, plotting=False) -> Tuple[List[NDArray], List[NDArray]]:
-    start = ownship[params.measured_window]
-    x, y = np.linspace(start[0] - solution_span, start[0] + solution_span, 25), np.linspace(start[1], start[1] + 2*solution_span, 25)
+def get_in_out_wedges_and_vertices(wedges : List, plotting=False) -> Tuple[List[NDArray], List[NDArray]]:
+    x, y = np.linspace(-params.solution_span, params.solution_span, 25), np.linspace(0, 2*params.solution_span, 25)
     X, Y = np.meshgrid(x, y)
 
     list_of_vertices = []
     in_out_wedge_list = []
     sim_time = 0
-    sim_time += ts
+    sim_time += params.ts_simulation
     
     colors = ['r-', 'g-', 'y-']
 
@@ -156,22 +154,21 @@ def get_in_out_wedges_and_vertices(wedges : List, ownship : NDArray, plotting=Fa
 
             if plotting:
                 plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
-                         [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=idx_sec/len(ownship))
+                         [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=i/25)
         
         list_of_vertices.append(vertices)
         in_out_wedge_list.append(Z)
-        sim_time += 30*ts
+        sim_time += 30*params.ts_simulation
         if plotting:
-            if idx_sec < len(ownship):
-                own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
-                plt.plot(own_pos[0,0], own_pos[1,0], 'ko', markersize=2, alpha=idx_sec/len(ownship))
-                plt.xlim(start[0]-solution_span, start[0] + solution_span)
-                plt.ylim(start[1], start[1] + 2*solution_span)
-                plt.xlabel('E')
-                plt.ylabel('N')
-                plt.pause(0.01)
+            own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
+            plt.plot(own_pos[0], own_pos[1], 'ko', markersize=2, alpha=i/25)
+            plt.xlim(-params.solution_span, params.solution_span)
+            plt.ylim(0, 2*params.solution_span)
+            plt.xlabel('E')
+            plt.ylabel('N')
+            plt.pause(0.01)
     if plotting:
-        plt.savefig('visualAvoidance2D/figures/alpha_wedge.png', dpi=300)
+        # plt.savefig('visualAvoidance2D/figures/alpha_wedge.png', dpi=300)
         plt.show()
 
     return in_out_wedge_list, list_of_vertices
@@ -258,10 +255,6 @@ def distance_function(p : NDArray, vertices : NDArray) -> float:
         
     if sum(logic > 0) == 3:
         return -compute_distance_to_edge(p, vertices[1], vertices[2])
-    
-
-def compute_cross_product2D_vectorized(a : NDArray, b : NDArray) -> NDArray:
-    return a[:,0]*b[:,1] - a[:,1]*b[:,0]
 
 
 def distance_constraint_vectorized(x : List[float], vertice_list : List[NDArray]) -> NDArray:
@@ -272,7 +265,6 @@ def distance_constraint_vectorized(x : List[float], vertice_list : List[NDArray]
         for j, vertices in enumerate(vertice_list[i//2]):
             distances[num_intruders*i//2 + j] = distance_function(np.array([x[i], x[i+1]]), vertices)
 
-    # print(distances)
     return distances
 
 
@@ -284,29 +276,29 @@ def object_function_new(x : List[float], goalPosition: Tuple[float, float]=(20.,
     return res
 
 
-def initialize_x0(path : List[float], start : Tuple[float, float, float], end : Tuple[float, float, float], dim : int, ownship_start : NDArray) -> Tuple[List[float], Tuple[float, float], Tuple[float, float]]:
-    scaler_shift = 2*solution_span/dim
+def initialize_x0(path : List[float], start : Tuple[float, float, float], end : Tuple[float, float, float], dim : int) -> Tuple[List[float], Tuple[float, float], Tuple[float, float]]:
+    scaler_shift = 2*params.solution_span/d# print(distances)im
     x0 = []
     past = -1
     for i in range(len(path)):
         if path[i][0] != past:
-            x0.append(scaler_shift*path[i][1] + ownship_start[1])
-            x0.append(scaler_shift*path[i][2] - solution_span + ownship_start[0])
+            x0.append(scaler_shift*path[i][1])
+            x0.append(scaler_shift*path[i][2] - params.solution_span)
         past = path[i][0]
 
-    start_point = np.array([scaler_shift*start[1] + ownship_start[1], scaler_shift*start[2]-solution_span + ownship_start[0]])
-    end_point = np.array([scaler_shift*end[1] + ownship_start[1], scaler_shift*end[2]-solution_span + ownship_start[0]])
+    start_point = np.array([scaler_shift*start[1], scaler_shift*start[2]-params.solution_span])
+    end_point = np.array([scaler_shift*end[1], scaler_shift*end[2]-params.solution_span])
 
     return x0, start_point, end_point
 
 
-def optimize_path_vectorized(x0 : List[NDArray], start_point : Tuple[float, float], end_point : Tuple[float, float], array_of_vertices : NDArray) -> NDArray:
-    vel_threshold = 2*solution_span/25.
+def get_optimal_control_points(x0 : List[NDArray], start_point : Tuple[float, float], end_point : Tuple[float, float], array_of_vertices : NDArray, safety_threshold : float = -100.) -> NDArray:
+    vel_threshold = 2*params.solution_span/25.
     
     buffer = np.ones(2)*3
     start_point_constraint = LinearConstraint(np.eye(2, len(x0)), start_point-buffer, start_point+buffer)
     nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
-    dnlc = NonlinearConstraint(lambda x: distance_constraint_vectorized(x, array_of_vertices), -np.inf, -50)
+    dnlc = NonlinearConstraint(lambda x: distance_constraint_vectorized(x, array_of_vertices), -np.inf, safety_threshold)
     bounds = None
     res = minimize(object_function_new, x0, args=(np.array([end_point[0], end_point[1]]),), method='SLSQP', bounds=bounds, options={'maxiter':500, 'disp':True}, constraints=[nlc, dnlc, start_point_constraint], )
     return res

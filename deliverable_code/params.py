@@ -6,3 +6,4 @@ max_area = 25
 bearing_uncertainty = 0.1
 measured_window = 30 # number of frames
 dim_astar = 25
+solution_span = 1000
