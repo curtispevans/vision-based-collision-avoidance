@@ -31,11 +31,11 @@ def plot_control_points(cntrl_pts):
 
 
 # Example usage of the path planner
-bearings, sizes = get_bearing_size_measurements("deliverable_code/xplane_data/0002/20241205_151830_bearing_info.npy")
-ownship, intruders = get_ownship_intruder_positions("deliverable_code/xplane_data/0002/20241205_151830_all_positions_in_path.npy")
+bearings, sizes = get_bearing_size_measurements("deliverable_code/xplane_data/0005/20241205_153033_bearing_info.npy")
+ownship, intruders = get_ownship_intruder_positions("deliverable_code/xplane_data/0005/20241205_153033_all_positions_in_path.npy")
 
 start = time.time()
-cntrl_pts = plan_path(bearings, sizes, ownship, len(intruders), -150)
+cntrl_pts = plan_path(bearings, sizes, ownship, len(intruders), -300)
 end = time.time()
 print("\nTime taken to plan path: ", end - start, " seconds\n")
 plot_control_points(cntrl_pts)

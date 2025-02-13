@@ -42,3 +42,6 @@ This file contains the `WedgeEstimator` class and one helper function for the cl
 
 ## demonstration.py
 This file contains a demo on how to use the path planner with the given xplane data. 
+
+## Comments
+One thing to note is that the wedge propagation is not super great at the moment because of the noisy pixel measurment. We are currently working on ways around this problem. You can see the wedge propagation if you make plotting=True on line 13 in `path_planner.py`.
