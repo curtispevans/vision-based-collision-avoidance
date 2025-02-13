@@ -36,3 +36,9 @@ This file contains the `WedgeEstimator` class and one helper function for the cl
 - `get_optimal_control_points(x0, start_point, end_point, array_of_vertices, safety_threshold)` this will return the optimal control points for the ownship. The safety threshold will push the control points farther away from the edge of the wedge. If the safety threshold is 0 that means it is on the edge of the wedge but if it is -100 is has to be -100 distance away from the wedge. 
 -`get_knot_points(num_control_points, degree)` this will return the knot points for the b-spline.
 - `get_bspline_path(control_points, degree)` this will return the curve or trajectory for ownship given the control points and a degree (which is usually 3).
+
+## path_planner.py
+- `plan_path(bearing_angles, sizes, ownship_poses, num_intruders, safety_threshold=-50)` this is the path planner function. It takes a list of bearings and sizes with the list format being [[intruder1_bearing1, intruder2_bearing2,...],[intruder2_bearing1, intruder2_bearing2,...],...]. It needs a list of ownship positions that match the dimension of a single intruders bearing or size list. The cooridantes are coded for (east, north) positions. It then needs the number of intruders at that time and a safety threshold. The safety threshold need to be negative. The smaller the threshold the safer the path planner will be. This function essentially calls all the other functions from utility files to create one nice function.  
+
+## demonstration.py
+This file contains a demo on how to use the path planner with the given xplane data. 
