@@ -2,12 +2,13 @@ from path_planner import plan_path
 import numpy as np
 from matplotlib import pyplot as plt
 import time
+import params
 
 def get_bearing_size_measurements(filepath):
     data = np.load(filepath)
     bearings = [[] for _ in range(data.shape[1])]
     sizes = [[] for _ in range(data.shape[1])]
-    for i in range(data.shape[0]):
+    for i in range(params.measured_window):
         for j in range(data.shape[1]):
             bearings[j].append(data[i][j,0])
             sizes[j].append(data[i][j,1])
@@ -30,8 +31,8 @@ def plot_control_points(cntrl_pts):
 
 
 # Example usage of the path planner
-bearings, sizes = get_bearing_size_measurements("visualAvoidance2D/data/xplane_data/0002/20241205_151830_bearing_info.npy")
-ownship, intruders = get_ownship_intruder_positions("visualAvoidance2D/data/xplane_data/0002/20241205_151830_all_positions_in_path.npy")
+bearings, sizes = get_bearing_size_measurements("deliverable_code/xplane_data/0002/20241205_151830_bearing_info.npy")
+ownship, intruders = get_ownship_intruder_positions("deliverable_code/xplane_data/0002/20241205_151830_all_positions_in_path.npy")
 
 start = time.time()
 cntrl_pts = plan_path(bearings, sizes, ownship, len(intruders), -150)

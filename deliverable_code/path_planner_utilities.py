@@ -277,7 +277,7 @@ def object_function_new(x : List[float], goalPosition: Tuple[float, float]=(20.,
 
 
 def initialize_x0(path : List[float], start : Tuple[float, float, float], end : Tuple[float, float, float], dim : int) -> Tuple[List[float], Tuple[float, float], Tuple[float, float]]:
-    scaler_shift = 2*params.solution_span/d# print(distances)im
+    scaler_shift = 2*params.solution_span/dim
     x0 = []
     past = -1
     for i in range(len(path)):
