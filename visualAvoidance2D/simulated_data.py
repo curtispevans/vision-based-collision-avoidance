@@ -260,10 +260,10 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     for i, vertices in enumerate(list_of_vertices):
         for j, vertice in enumerate(vertices):
             ax.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
-                    [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], i, colors[j], linewidth=1)
+                    [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], i, colors[j], linewidth=1, alpha=i/25)
 
     for i in range(0, len(res.x), 2):
-        ax.plot(res.x[i+1], res.x[i], int(i/2), 'o', color='blue', markersize=4)
+        ax.plot(res.x[i+1], res.x[i], int(i/2), 'o', color='blue', markersize=4, alpha = i/2/25)
 
     ax.plot(res.x[-1], res.x[-2], 24, 'o', color='blue', markersize=4, label='Optimal control points')
 
@@ -275,9 +275,9 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     # ax.set_zlabel('Time in Seconds')
     ax.legend(loc='lower right')
 
-    # ax.view_init(elev=90, azim=-90)
-    # ax.set_zticks([])
-    # ax.set_zlabel('')
+    ax.view_init(elev=5, azim=-90)
+    ax.set_zticks([])
+    ax.set_zlabel('Time')
     
     plt.tight_layout()
     plt.savefig('visualAvoidance2D/figures/optimal_control_points.png', dpi=300)
