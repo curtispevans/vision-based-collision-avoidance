@@ -12,7 +12,7 @@ from plotting_bspline_trajectory import get_bspline_path
 
 intruder_wingspan = 10
 ts = 1/30
-solution_span = 500
+solution_span = 1000
 
 def get_ownship_intruder_positions(filepath):
     real = np.load(filepath)
@@ -271,14 +271,17 @@ def plot_solution(x0, res, list_of_vertices, ownship_start):
     ax.set_xlim([ownship_start[0] - solution_span, ownship_start[0] + solution_span])
     ax.set_ylim([ownship_start[1], ownship_start[1] + 2*solution_span])
     ax.set_xlabel('E')
+    ax.set_xticklabels(["{}".format(-1000)] + [""] + ["-500"] + [""] + ["{}".format(0)] + [""] + ["500"] + [""]  + ["{}".format(1000)])
     ax.set_ylabel('N')
+    ax.set_yticklabels([])
     # ax.set_zlabel('Time in Seconds')
     ax.legend(loc='lower right')
 
     ax.view_init(elev=5, azim=-90)
-    ax.set_zticks([])
-    ax.set_zlabel('Time')
-    
+    # ax.set_zticklabels([])
+    # ax.set_zlabel('Time')
+    ax.grid(True)
+
     plt.tight_layout()
     plt.savefig('visualAvoidance2D/figures/optimal_control_points.png', dpi=300)
     plt.show()
@@ -370,8 +373,8 @@ def ion_code(filepath_real, filepath_bearing):
 
 
 if __name__ == '__main__':
-    filepath_real = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_all_positions_in_path.npy'
-    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0006/20241205_153356_bearing_info.npy'
+    filepath_real = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_all_positions_in_path.npy'
+    filepath_bearing = 'visualAvoidance2D/data/xplane_data/0005/20241205_153033_bearing_info.npy'
 
     ownship, intruders = get_ownship_intruder_positions(filepath_real)
     bearings, sizes = get_bearing_size_measurements(filepath_bearing)
