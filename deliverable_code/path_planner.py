@@ -14,8 +14,8 @@ def plan_path(bearing_angles, sizes, ownship_poses, num_intruders, safety_thresh
 
     data = np.array(in_out_wedge_list)
     binary_matrix = ppu.binarize_matrix(data, 0)
-    start = (0, 0, 3) # (time, N, E)
-    end = (4, 4, 3) # (time, N, E)
+    start = (0, 0, params.dim_astar//2) # (time, N, E)
+    end = (params.dim_astar-1, params.dim_astar-1, params.dim_astar//2) # (time, N, E)
     path = ppu.bidirectional_a_star(binary_matrix, start, end)
 
     x0, start_point, end_point = ppu.initialize_x0(path, start, end, params.dim_astar)

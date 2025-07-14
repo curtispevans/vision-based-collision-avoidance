@@ -7,4 +7,4 @@ bearing_uncertainty = 0.1
 measured_window = 30 # number of frames
 dim_astar = 5
 solution_span = 100
-safety_threshold = -250  # default safety threshold for path planning
+safety_threshold = -200  # default safety threshold for path planning

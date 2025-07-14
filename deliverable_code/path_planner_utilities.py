@@ -278,16 +278,17 @@ def object_function_new(x : List[float], goalPosition: Tuple[float, float]=(20.,
 
 def initialize_x0(path : List[float], start : Tuple[float, float, float], end : Tuple[float, float, float], dim : int) -> Tuple[List[float], Tuple[float, float], Tuple[float, float]]:
     scaler_shift = 2*params.solution_span/dim
+
     x0 = []
     past = -1
     for i in range(len(path)):
         if path[i][0] != past:
-            x0.append(scaler_shift*path[i][1])
-            x0.append(scaler_shift*path[i][2] - params.solution_span)
+            x0.append(scaler_shift*path[i][1] + scaler_shift/2)
+            x0.append(scaler_shift*path[i][2] - params.solution_span + scaler_shift/2)
         past = path[i][0]
 
-    start_point = np.array([scaler_shift*start[1], scaler_shift*start[2]-params.solution_span])
-    end_point = np.array([scaler_shift*end[1], scaler_shift*end[2]-params.solution_span])
+    start_point = np.array([scaler_shift*start[1] + scaler_shift/2, scaler_shift*start[2]-params.solution_span + scaler_shift/2])
+    end_point = np.array([scaler_shift*end[1] + scaler_shift/2, scaler_shift*end[2]-params.solution_span + scaler_shift/2])
 
     return x0, start_point, end_point
 
@@ -295,7 +296,7 @@ def initialize_x0(path : List[float], start : Tuple[float, float, float], end : 
 def get_optimal_control_points(x0 : List[NDArray], start_point : Tuple[float, float], end_point : Tuple[float, float], array_of_vertices : NDArray, safety_threshold : float = -100.) -> NDArray:
     vel_threshold = 2*params.solution_span/25.
     
-    buffer = np.ones(2)*3
+    buffer = np.ones(2)*0
     start_point_constraint = LinearConstraint(np.eye(2, len(x0)), start_point-buffer, start_point+buffer)
     nlc = NonlinearConstraint(lambda x: con_cltr_pnt(x, start_point), 0.0, vel_threshold)
     dnlc = NonlinearConstraint(lambda x: distance_constraint_vectorized(x, array_of_vertices), -np.inf, safety_threshold)

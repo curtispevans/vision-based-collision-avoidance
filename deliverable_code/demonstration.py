@@ -39,6 +39,7 @@ ownship = np.array([[-0.1471664471837837, 229.2655761315117], [-0.14716806842481
 # print(bearings)
 start = time.time()
 cntrl_pts = plan_path(bearings, sizes, ownship, 1, params.safety_threshold)
+print(cntrl_pts)
 end = time.time()
 print("\nTime taken to plan path: ", end - start, " seconds\n")
 plot_control_points(cntrl_pts)
