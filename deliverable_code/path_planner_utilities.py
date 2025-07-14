@@ -132,7 +132,7 @@ def bidirectional_a_star(grid, start, goal):
 
 
 def get_in_out_wedges_and_vertices(wedges : List, plotting=False) -> Tuple[List[NDArray], List[NDArray]]:
-    x, y = np.linspace(-params.solution_span, params.solution_span, 25), np.linspace(0, 2*params.solution_span, 25)
+    x, y = np.linspace(-params.solution_span, params.solution_span, params.dim_astar), np.linspace(0, 2*params.solution_span, params.dim_astar)
     X, Y = np.meshgrid(x, y)
 
     list_of_vertices = []
@@ -142,26 +142,26 @@ def get_in_out_wedges_and_vertices(wedges : List, plotting=False) -> Tuple[List[
     
     colors = ['r-', 'g-', 'y-']
 
-    for i in range(25): 
-        Z = np.zeros((25, 25))
+    for i in range(params.dim_astar): 
+        Z = np.zeros((params.dim_astar, params.dim_astar))
         vertices = []
         points = np.vstack((Y.ravel(), X.ravel())).T
         idx_sec = params.measured_window + i*30
         for j, wedge in enumerate(wedges):
             vertice = wedge.get_wedge_vertices(sim_time)
             vertices.append(vertice)
-            Z += are_inside_wedge(points, vertice).reshape(25, 25)
+            Z += are_inside_wedge(points, vertice).reshape(params.dim_astar, params.dim_astar)
 
             if plotting:
                 plt.plot([vertice[0,1], vertice[1,1], vertice[2,1], vertice[3,1], vertice[0,1]],
-                         [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=i/25)
+                         [vertice[0,0], vertice[1,0], vertice[2,0], vertice[3,0], vertice[0,0]], colors[j], linewidth=1, alpha=i/params.dim_astar)
         
         list_of_vertices.append(vertices)
         in_out_wedge_list.append(Z)
         sim_time += 30*params.ts_simulation
         if plotting:
             own_pos = wedges[0].init_own_pos + wedges[0].init_own_vel*sim_time
-            plt.plot(own_pos[0], own_pos[1], 'ko', markersize=2, alpha=i/25)
+            plt.plot(own_pos[0], own_pos[1], 'ko', markersize=2, alpha=i/params.dim_astar)
             plt.xlim(-params.solution_span, params.solution_span)
             plt.ylim(0, 2*params.solution_span)
             plt.xlabel('E')
